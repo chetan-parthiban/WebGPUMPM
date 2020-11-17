@@ -50,37 +50,23 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       vertexBuffers: [
         {
           // instanced particles buffer
-          arrayStride: 4 * 4,
+          arrayStride: 6 * 4,
           stepMode: "instance",
           attributes: [
             {
               // instance position
               shaderLocation: 0,
               offset: 0,
-              format: "float2",
+              format: "float3",
             },
             {
               // instance velocity
               shaderLocation: 1,
-              offset: 2 * 4,
-              format: "float2",
+              offset: 3 * 4,
+              format: "float3",
             },
           ],
-        }
-        ,
-        // {
-        //   // vertex buffer
-        //   arrayStride: 2 * 4,
-        //   stepMode: "vertex",
-        //   attributes: [
-        //     {
-        //       // vertex positions
-        //       shaderLocation: 2,
-        //       offset: 0,
-        //       format: "float2",
-        //     },
-        //   ],
-        // },
+        },
       ],
     },
 
@@ -123,14 +109,6 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     }
   };
 
-  // const vertexBufferData = new Float32Array([-0.01, -0.02, 0.01, -0.02, 0.00, 0.02]);
-  // const verticesBuffer = device.createBuffer({
-  //   size: vertexBufferData.byteLength,
-  //   usage: GPUBufferUsage.VERTEX,
-  //   mappedAtCreation: true,
-  // });
-  // new Float32Array(verticesBuffer.getMappedRange()).set(vertexBufferData);
-  // verticesBuffer.unmap();
 
   const simParamData = new Float32Array([
     0.04,  // deltaT;
@@ -149,12 +127,14 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   new Float32Array(simParamBuffer.getMappedRange()).set(simParamData);
   simParamBuffer.unmap();
 
-  const initialParticleData = new Float32Array(numParticles * 4);
+  const initialParticleData = new Float32Array(numParticles * 6);
   for (let i = 0; i < numParticles; ++i) {
-    initialParticleData[4 * i + 0] = 2 * (Math.random() - 0.5);
-    initialParticleData[4 * i + 1] = 2 * (Math.random() - 0.5);
-    initialParticleData[4 * i + 2] = 2 * (Math.random() - 0.5) * 0.1;
-    initialParticleData[4 * i + 3] = 2 * (Math.random() - 0.5) * 0.1;
+    initialParticleData[6 * i + 0] = 2 * (Math.random() - 0.5);
+    initialParticleData[6 * i + 1] = 2 * (Math.random() - 0.5);
+    initialParticleData[6 * i + 2] = 2 * (Math.random() - 0.5); // Added
+    initialParticleData[6 * i + 3] = 2 * (Math.random() - 0.5) * 0.1;
+    initialParticleData[6 * i + 4] = 2 * (Math.random() - 0.5) * 0.1;
+    initialParticleData[6 * i + 5] = 2 * (Math.random() - 0.5) * 0.1; // Added
   }
 
   const particleBuffers: GPUBuffer[] = new Array(2);
@@ -213,7 +193,6 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
       passEncoder.setPipeline(renderPipeline);
       passEncoder.setVertexBuffer(0, particleBuffers[(t + 1) % 2]);
-      // passEncoder.setVertexBuffer(1, verticesBuffer);
       passEncoder.draw(3, numParticles, 0, 0);
       passEncoder.endPass();
     }
@@ -225,14 +204,10 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
 export const glslShaders = {
   vertex: `#version 450
-layout(location = 0) in vec2 a_particlePos;
-layout(location = 1) in vec2 a_particleVel;
-// layout(location = 2) in vec2 a_pos;
+layout(location = 0) in vec3 a_particlePos;
+layout(location = 1) in vec3 a_particleVel;
 void main() {
-  // float angle = -atan(a_particleVel.x, a_particleVel.y);
-  // vec2 pos = vec2(a_pos.x * cos(angle) - a_pos.y * sin(angle),
-  //         a_pos.x * sin(angle) + a_pos.y * cos(angle));
-  gl_Position = vec4(a_particlePos, 0, 1);
+  gl_Position = vec4(a_particlePos, 1);
 }`,
 
   fragment: `#version 450
@@ -243,8 +218,8 @@ void main() {
 
   compute: (numParticles: number) => `#version 450
 struct Particle {
-  vec2 pos;
-  vec2 vel;
+  vec3 pos;
+  vec3 vel;
 };
 
 layout(std140, set = 0, binding = 0) uniform SimParams {
@@ -271,21 +246,21 @@ void main() {
   uint index = gl_GlobalInvocationID.x;
   if (index >= ${numParticles} /* numParticles */) { return; }
 
-  vec2 vPos = particlesA.particles[index].pos;
-  vec2 vVel = particlesA.particles[index].vel;
+  vec3 vPos = particlesA.particles[index].pos;
+  vec3 vVel = particlesA.particles[index].vel;
 
-  vec2 cMass = vec2(0.0, 0.0);
-  vec2 cVel = vec2(0.0, 0.0);
-  vec2 colVel = vec2(0.0, 0.0);
+  vec3 cMass = vec3(0.0, 0.0, 0.0);
+  vec3 cVel = vec3(0.0, 0.0, 0.0);
+  vec3 colVel = vec3(0.0, 0.0, 0.0);
   int cMassCount = 0;
   int cVelCount = 0;
 
-  vec2 pos;
-  vec2 vel;
+  vec3 pos;
+  vec3 vel;
   for (int i = 0; i < ${numParticles} /* numParticles */; ++i) {
     if (i == index) { continue; }
-    pos = particlesA.particles[i].pos.xy;
-    vel = particlesA.particles[i].vel.xy;
+    pos = particlesA.particles[i].pos.xyz;
+    vel = particlesA.particles[i].vel.xyz;
 
     if (distance(pos, vPos) < params.rule1Distance) {
       cMass += pos;
@@ -319,6 +294,8 @@ void main() {
   if (vPos.x > 1.0) vPos.x = -1.0;
   if (vPos.y < -1.0) vPos.y = 1.0;
   if (vPos.y > 1.0) vPos.y = -1.0;
+  if (vPos.z < -1.0) vPos.z = 1.0;
+  if (vPos.z > 1.0) vPos.z = -1.0;
 
   particlesB.particles[index].pos = vPos;
 
