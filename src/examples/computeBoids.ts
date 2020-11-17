@@ -66,20 +66,21 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
               format: "float2",
             },
           ],
-        },
-        {
-          // vertex buffer
-          arrayStride: 2 * 4,
-          stepMode: "vertex",
-          attributes: [
-            {
-              // vertex positions
-              shaderLocation: 2,
-              offset: 0,
-              format: "float2",
-            },
-          ],
-        },
+        }
+        ,
+        // {
+        //   // vertex buffer
+        //   arrayStride: 2 * 4,
+        //   stepMode: "vertex",
+        //   attributes: [
+        //     {
+        //       // vertex positions
+        //       shaderLocation: 2,
+        //       offset: 0,
+        //       format: "float2",
+        //     },
+        //   ],
+        // },
       ],
     },
 
@@ -92,11 +93,9 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
   const computePipeline = device.createComputePipeline({
     computeStage: {
-      module: useWGSL
-        ? device.createShaderModule({
-            code: wgslShaders.compute(numParticles),
-          })
-        : device.createShaderModule({
+      module: 
+        // Deleted
+        device.createShaderModule({
             code: glslShaders.compute(numParticles),
             transform: (glsl) => glslang.compileGLSL(glsl, "compute"),
           }),
@@ -124,14 +123,14 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     }
   };
 
-  const vertexBufferData = new Float32Array([-0.01, -0.02, 0.01, -0.02, 0.00, 0.02]);
-  const verticesBuffer = device.createBuffer({
-    size: vertexBufferData.byteLength,
-    usage: GPUBufferUsage.VERTEX,
-    mappedAtCreation: true,
-  });
-  new Float32Array(verticesBuffer.getMappedRange()).set(vertexBufferData);
-  verticesBuffer.unmap();
+  // const vertexBufferData = new Float32Array([-0.01, -0.02, 0.01, -0.02, 0.00, 0.02]);
+  // const verticesBuffer = device.createBuffer({
+  //   size: vertexBufferData.byteLength,
+  //   usage: GPUBufferUsage.VERTEX,
+  //   mappedAtCreation: true,
+  // });
+  // new Float32Array(verticesBuffer.getMappedRange()).set(vertexBufferData);
+  // verticesBuffer.unmap();
 
   const simParamData = new Float32Array([
     0.04,  // deltaT;
@@ -214,7 +213,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
       passEncoder.setPipeline(renderPipeline);
       passEncoder.setVertexBuffer(0, particleBuffers[(t + 1) % 2]);
-      passEncoder.setVertexBuffer(1, verticesBuffer);
+      // passEncoder.setVertexBuffer(1, verticesBuffer);
       passEncoder.draw(3, numParticles, 0, 0);
       passEncoder.endPass();
     }
@@ -228,12 +227,12 @@ export const glslShaders = {
   vertex: `#version 450
 layout(location = 0) in vec2 a_particlePos;
 layout(location = 1) in vec2 a_particleVel;
-layout(location = 2) in vec2 a_pos;
+// layout(location = 2) in vec2 a_pos;
 void main() {
-  float angle = -atan(a_particleVel.x, a_particleVel.y);
-  vec2 pos = vec2(a_pos.x * cos(angle) - a_pos.y * sin(angle),
-          a_pos.x * sin(angle) + a_pos.y * cos(angle));
-  gl_Position = vec4(pos + a_particlePos, 0, 1);
+  // float angle = -atan(a_particleVel.x, a_particleVel.y);
+  // vec2 pos = vec2(a_pos.x * cos(angle) - a_pos.y * sin(angle),
+  //         a_pos.x * sin(angle) + a_pos.y * cos(angle));
+  gl_Position = vec4(a_particlePos, 0, 1);
 }`,
 
   fragment: `#version 450
