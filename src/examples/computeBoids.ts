@@ -1,3 +1,4 @@
+import { debug } from 'webpack';
 import glslangModule from '../glslang';
 
 export const title = 'Compute Boids';
@@ -50,20 +51,20 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       vertexBuffers: [
         {
           // instanced particles buffer
-          arrayStride: 6 * 4,
+          arrayStride: 8 * 4,
           stepMode: "instance",
           attributes: [
             {
               // instance position
               shaderLocation: 0,
               offset: 0,
-              format: "float3",
+              format: "float4",
             },
             {
               // instance velocity
               shaderLocation: 1,
-              offset: 3 * 4,
-              format: "float3",
+              offset: 4 * 4,
+              format: "float4",
             },
           ],
         },
@@ -127,14 +128,16 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   new Float32Array(simParamBuffer.getMappedRange()).set(simParamData);
   simParamBuffer.unmap();
 
-  const initialParticleData = new Float32Array(numParticles * 6);
+  const initialParticleData = new Float32Array(numParticles * 8);
   for (let i = 0; i < numParticles; ++i) {
-    initialParticleData[6 * i + 0] = 2 * (Math.random() - 0.5);
-    initialParticleData[6 * i + 1] = 2 * (Math.random() - 0.5);
-    initialParticleData[6 * i + 2] = 2 * (Math.random() - 0.5); // Added
-    initialParticleData[6 * i + 3] = 2 * (Math.random() - 0.5) * 0.1;
-    initialParticleData[6 * i + 4] = 2 * (Math.random() - 0.5) * 0.1;
-    initialParticleData[6 * i + 5] = 2 * (Math.random() - 0.5) * 0.1; // Added
+    initialParticleData[8 * i + 0] = 2 * (Math.random() - 0.5);
+    initialParticleData[8 * i + 1] = 2 * (Math.random() - 0.5);
+    initialParticleData[8 * i + 2] = 2 * (Math.random() - 0.5); // Added
+    initialParticleData[8 * i + 3] = 1; // Added
+    initialParticleData[8 * i + 4] = 2 * (Math.random() - 0.5) * 0.1;
+    initialParticleData[8 * i + 5] = 2 * (Math.random() - 0.5) * 0.1;
+    initialParticleData[8 * i + 6] = 2 * (Math.random() - 0.5) * 0.1; // Added
+    initialParticleData[8 * i + 7] = 1; // Added
   }
 
   const particleBuffers: GPUBuffer[] = new Array(2);
@@ -159,14 +162,16 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
           offset: 0,
           size: simParamData.byteLength
         },
-      }, {
+      }, 
+      {
         binding: 1,
         resource: {
           buffer: particleBuffers[i],
           offset: 0,
           size: initialParticleData.byteLength,
         },
-      }, {
+      }, 
+      {
         binding: 2,
         resource: {
           buffer: particleBuffers[(i + 1) % 2],
@@ -204,22 +209,25 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
 export const glslShaders = {
   vertex: `#version 450
-layout(location = 0) in vec3 a_particlePos;
-layout(location = 1) in vec3 a_particleVel;
+layout(location = 0) in vec4 a_particlePos;
+layout(location = 1) in vec4 a_particleVel;
+layout(location = 0) out vec3 fs_pos;
 void main() {
-  gl_Position = vec4(a_particlePos, 1);
+  gl_Position = a_particlePos;
+  fs_pos = a_particlePos.xyz;
 }`,
 
   fragment: `#version 450
+layout(location = 0) in vec3 fs_pos;
 layout(location = 0) out vec4 fragColor;
 void main() {
-  fragColor = vec4(1.0);
+  fragColor = vec4( (fs_pos.z + 1.0)/2.0 + 0.1,  0, (fs_pos.z + 1.0)/2.0+ 0.1, 1.0);
 }`,
 
   compute: (numParticles: number) => `#version 450
 struct Particle {
-  vec3 pos;
-  vec3 vel;
+  vec4 pos;
+  vec4 vel;
 };
 
 layout(std140, set = 0, binding = 0) uniform SimParams {
@@ -246,8 +254,8 @@ void main() {
   uint index = gl_GlobalInvocationID.x;
   if (index >= ${numParticles} /* numParticles */) { return; }
 
-  vec3 vPos = particlesA.particles[index].pos;
-  vec3 vVel = particlesA.particles[index].vel;
+  vec3 vPos = particlesA.particles[index].pos.xyz;
+  vec3 vVel = particlesA.particles[index].vel.xyz;
 
   vec3 cMass = vec3(0.0, 0.0, 0.0);
   vec3 cVel = vec3(0.0, 0.0, 0.0);
@@ -297,134 +305,10 @@ void main() {
   if (vPos.z < -1.0) vPos.z = 1.0;
   if (vPos.z > 1.0) vPos.z = -1.0;
 
-  particlesB.particles[index].pos = vPos;
+  particlesB.particles[index].pos = vec4(vPos,1);
 
   // Write back
-  particlesB.particles[index].vel = vVel;
+  particlesB.particles[index].vel = vec4(vVel,1);
 }`,
 };
 
-export const wgslShaders = {
-  vertex: `
-[[location(0)]] var<in> a_particlePos : vec2<f32>;
-[[location(1)]] var<in> a_particleVel : vec2<f32>;
-[[location(2)]] var<in> a_pos : vec2<f32>;
-[[builtin(position)]] var<out> Position : vec4<f32>;
-
-[[stage(vertex)]]
-fn main() -> void {
-  var angle : f32 = -atan2(a_particleVel.x, a_particleVel.y);
-  var pos : vec2<f32> = vec2<f32>(
-      (a_pos.x * cos(angle)) - (a_pos.y * sin(angle)),
-      (a_pos.x * sin(angle)) + (a_pos.y * cos(angle)));
-  Position = vec4<f32>(pos + a_particlePos, 0.0, 1.0);
-  return;
-}
-`,
-
-  fragment: `
-[[location(0)]] var<out> fragColor : vec4<f32>;
-
-[[stage(fragment)]]
-fn main() -> void {
-  fragColor = vec4<f32>(1.0, 1.0, 1.0, 1.0);
-  return;
-}
-`,
-
-  compute: (numParticles: number) => `
-[[block]] struct Particle {
-  [[offset(0)]] pos : vec2<f32>;
-  [[offset(8)]] vel : vec2<f32>;
-};
-[[block]] struct SimParams {
-  [[offset(0)]] deltaT : f32;
-  [[offset(4)]] rule1Distance : f32;
-  [[offset(8)]] rule2Distance : f32;
-  [[offset(12)]] rule3Distance : f32;
-  [[offset(16)]] rule1Scale : f32;
-  [[offset(20)]] rule2Scale : f32;
-  [[offset(24)]] rule3Scale : f32;
-};
-[[block]] struct Particles {
-  [[offset(0)]] particles : [[stride(16)]] array<Particle, ${numParticles}>;
-};
-[[binding(0), set(0)]] var<uniform> params : SimParams;
-[[binding(1), set(0)]] var<storage_buffer> particlesA : Particles;
-[[binding(2), set(0)]] var<storage_buffer> particlesB : Particles;
-[[builtin(global_invocation_id)]] var<in> GlobalInvocationID : vec3<u32>;
-
-# https://github.com/austinEng/Project6-Vulkan-Flocking/blob/master/data/shaders/computeparticles/particle.comp
-[[stage(compute)]]
-fn main() -> void {
-  var index : u32 = GlobalInvocationID.x;
-  if (index >= ${numParticles}) {
-    return;
-  }
-  var vPos : vec2<f32> = particlesA.particles[index].pos;
-  var vVel : vec2<f32> = particlesA.particles[index].vel;
-  var cMass : vec2<f32> = vec2<f32>(0.0, 0.0);
-  var cVel : vec2<f32> = vec2<f32>(0.0, 0.0);
-  var colVel : vec2<f32> = vec2<f32>(0.0, 0.0);
-  var cMassCount : u32 = 0u;
-  var cVelCount : u32 = 0u;
-  var pos : vec2<f32>;
-  var vel : vec2<f32>;
-
-  for (var i : u32 = 0u; i < ${numParticles}u; i = i + 1u) {
-    if (i == index) {
-      continue;
-    }
-
-    pos = particlesA.particles[i].pos.xy;
-    vel = particlesA.particles[i].vel.xy;
-    if (distance(pos, vPos) < params.rule1Distance) {
-      cMass = cMass + pos;
-      cMassCount = cMassCount + 1u;
-    }
-    if (distance(pos, vPos) < params.rule2Distance) {
-      colVel = colVel - (pos - vPos);
-    }
-    if (distance(pos, vPos) < params.rule3Distance) {
-      cVel = cVel + vel;
-      cVelCount = cVelCount + 1u;
-    }
-  }
-  if (cMassCount > 0u) {
-    var temp : f32 = f32(cMassCount);
-    cMass = (cMass / vec2<f32>(temp, temp)) - vPos;
-    # cMass =
-    #   (cMass / vec2<f32>(f32(cMassCount), f32(cMassCount))) - vPos;
-  }
-  if (cVelCount > 0u) {
-    var temp : f32 = f32(cVelCount);
-    cVel = cVel / vec2<f32>(temp, temp);
-    # cVel = cVel / vec2<f32>(f32(cVelCount), f32(cVelCount));
-  }
-  vVel = vVel + (cMass * params.rule1Scale) + (colVel * params.rule2Scale) +
-      (cVel * params.rule3Scale);
-
-  # clamp velocity for a more pleasing simulation
-  vVel = normalize(vVel) * clamp(length(vVel), 0.0, 0.1);
-  # kinematic update
-  vPos = vPos + (vVel * params.deltaT);
-  # Wrap around boundary
-  if (vPos.x < -1.0) {
-    vPos.x = 1.0;
-  }
-  if (vPos.x > 1.0) {
-    vPos.x = -1.0;
-  }
-  if (vPos.y < -1.0) {
-    vPos.y = 1.0;
-  }
-  if (vPos.y > 1.0) {
-    vPos.y = -1.0;
-  }
-  # Write back
-  particlesB.particles[index].pos = vPos;
-  particlesB.particles[index].vel = vVel;
-  return;
-}
-`,
-};
