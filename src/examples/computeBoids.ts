@@ -214,14 +214,14 @@ layout(location = 1) in vec4 a_particleVel;
 layout(location = 0) out vec3 fs_pos;
 void main() {
   gl_Position = a_particlePos;
-  fs_pos = a_particlePos.xyz;
+  fs_pos = a_particleVel.xyz;
 }`,
 
   fragment: `#version 450
 layout(location = 0) in vec3 fs_pos;
 layout(location = 0) out vec4 fragColor;
 void main() {
-  fragColor = vec4( (fs_pos.z + 1.0)/2.0 + 0.1,  0, (fs_pos.z + 1.0)/2.0+ 0.1, 1.0);
+  fragColor = vec4( (fs_pos + 1) / 2 + 0.3, 1.0);
 }`,
 
   compute: (numParticles: number) => `#version 450
