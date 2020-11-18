@@ -1,5 +1,6 @@
 import { debug } from 'webpack';
 import glslangModule from '../glslang';
+import { mat4, vec3, vec4} from 'gl-matrix';
 
 export const title = 'Compute Boids';
 export const description = 'A GPU compute particle simulation that mimics \
@@ -8,7 +9,7 @@ export const description = 'A GPU compute particle simulation that mimics \
                             is used to draw instanced particles.';
 
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
-  const numParticles = 1500;
+  const numParticles = 2000;
 
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
@@ -111,6 +112,31 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   };
 
 
+
+
+  // test: uniform projection matrix for render pipeline
+  const uniformBufferSize = 4 * 16; // 4x4 matrix
+
+  const uniformBuffer = device.createBuffer({
+    size: uniformBufferSize,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const uniformBindGroup = device.createBindGroup({
+    layout: renderPipeline.getBindGroupLayout(0),
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: uniformBuffer,
+        },
+      },
+    ],
+  });
+
+
+
+
   const simParamData = new Float32Array([
     0.04,  // deltaT;
     0.1,   // rule1Distance;
@@ -182,8 +208,35 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     });
   }
 
+
+
+  const aspect = Math.abs(canvas.width / canvas.height);
+  let projectionMatrix = mat4.create();
+  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 100.0); // setting up projection matrix
+
+  function getTransformationMatrix(view) {
+
+    let modelViewProjectionMatrix = mat4.create();
+    mat4.multiply(modelViewProjectionMatrix, projectionMatrix, view);
+
+    return modelViewProjectionMatrix as Float32Array;
+  }
+
+
+
   let t = 0;
-  return function frame() {
+  return function frame(timestamp, view) {
+    const transformationMatrix = getTransformationMatrix(view); // gets a transformation matrix (modelViewProjection)
+  
+    // bind transformation matrix?
+    device.defaultQueue.writeBuffer(
+      uniformBuffer,
+      0,
+      transformationMatrix.buffer,
+      transformationMatrix.byteOffset,
+      transformationMatrix.byteLength
+    );
+
     renderPassDescriptor.colorAttachments[0].attachment = swapChain.getCurrentTexture().createView();
 
     const commandEncoder = device.createCommandEncoder();
@@ -197,6 +250,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     {
       const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
       passEncoder.setPipeline(renderPipeline);
+      passEncoder.setBindGroup(0, uniformBindGroup);
       passEncoder.setVertexBuffer(0, particleBuffers[(t + 1) % 2]);
       passEncoder.draw(3, numParticles, 0, 0);
       passEncoder.endPass();
@@ -209,11 +263,16 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
 export const glslShaders = {
   vertex: `#version 450
+
+layout(set = 0, binding = 0) uniform Uniforms {
+  mat4 modelViewProjectionMatrix;
+} uniforms;
+  
 layout(location = 0) in vec4 a_particlePos;
 layout(location = 1) in vec4 a_particleVel;
 layout(location = 0) out vec3 fs_pos;
 void main() {
-  gl_Position = a_particlePos;
+  gl_Position = uniforms.modelViewProjectionMatrix * a_particlePos;
   fs_pos = a_particleVel.xyz;
 }`,
 
@@ -221,7 +280,8 @@ void main() {
 layout(location = 0) in vec3 fs_pos;
 layout(location = 0) out vec4 fragColor;
 void main() {
-  fragColor = vec4( (fs_pos + 1) / 2 + 0.3, 1.0);
+  // fragColor = vec4( (fs_pos + 1) / 2 + 0.3, 1.0);
+  fragColor = vec4(normalize(fs_pos), 1.0);
 }`,
 
   compute: (numParticles: number) => `#version 450
