@@ -9,7 +9,7 @@ export const description = 'A GPU compute particle simulation that mimics \
                             is used to draw instanced particles.';
 
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
-  const numParticles = 2000;
+  const numParticles = 10000;  // 2000
 
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
@@ -280,8 +280,7 @@ void main() {
 layout(location = 0) in vec3 fs_pos;
 layout(location = 0) out vec4 fragColor;
 void main() {
-  // fragColor = vec4( (fs_pos + 1) / 2 + 0.3, 1.0);
-  fragColor = vec4(normalize(fs_pos), 1.0);
+  fragColor = vec4((normalize(fs_pos) + vec3(1.0)) / 2.0, 1.0);
 }`,
 
   compute: (numParticles: number) => `#version 450
