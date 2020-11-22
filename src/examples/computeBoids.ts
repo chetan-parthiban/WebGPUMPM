@@ -1,6 +1,7 @@
 import { debug } from 'webpack';
 import glslangModule from '../glslang';
 import { mat4, vec3, vec4} from 'gl-matrix';
+import { Vector3, Vector4, Matrix3, Matrix4 } from 'three';
 
 export const title = 'Compute Boids';
 export const description = 'A GPU compute particle simulation that mimics \
@@ -9,9 +10,51 @@ export const description = 'A GPU compute particle simulation that mimics \
                             is used to draw instanced particles.';
 
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
-  const numParticles = 10000;  // 2000
+  // console.log(JSON.stringify()); // For debugging purposes
+  // Simulation Parameters
+  const dt = 0.001; // Timestep
+  const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
 
+  // Grid Parameters
+  const minCorner = new Vector3(-1.0, -1.0, -1.0); // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
+  const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
+  const h = 0.02; // Cell width of the grid
+  const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid points in the x-direction
+  const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid points in the y-direction
+  const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid points in the z-direction
+  const numG = nxG * nyG * nzG; // Total number of grid points
+
+  // Particle Attributes
+  const E = 10000.0;  // Young's Modulus (Hardness)
+  const E0 = 14000; // Initial Young's Modulus (for snow)
+  const nu = 0.3; // Poisson's Ratio (Incompressibility)
+  const nuSnow = 0.2; // Poisson's Ratio (for snow)
+  const thetaC = 0.025; // Critical compression (for snow)
+  const thetaS = 0.0075;  // Critical stretch (for snow)
+  const xi = 10.0;  // Hardening coefficient (for snow)
+  const mu = E / (2.0 * (1.0 + nu));  // One of the Lamé parameters
+  const lambda = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu));  // One of the Lamé parameters
+  const lambdaFluid = 10; // parameter for fluid
+  const gamma = 7;  // parameter for fluid
+  const rhoJello = 1000.0;  // Density of the points' material for jello
+  const rhoSnow = 400;  // Density of the points' material for snow
+  const rhoFluid = 997; // Density of the points' material for fluid
+  const numP = 1000;  // Total number of points
+  // const volumeP = h * h * h / 8.0;
+
+  // Test
+  // let matA = new Matrix4();
+  // console.log(JSON.stringify(matA)); // For debugging purposes
+  // console.log(JSON.stringify(matA.elements[5])); // For debugging purposes
+
+  // Calling navigator.gpu.requestAdapter() returns a JavaScript promise
+  // that will asynchronously resolve with a GPU adapter.
+  // Think of this adapter as the graphics card.
+  //    (await suspends the execution until an asynchronous function return promise 
+  //    is fulfilled and unwraps the value from the Promise returned)
   const adapter = await navigator.gpu.requestAdapter();
+  // Calling adapter.requestDevice() to get a promise that will 
+  // resolve with a GPU device you’ll use to do some GPU computation
   const device = await adapter.requestDevice();
   const glslang = await glslangModule();
 
@@ -84,7 +127,19 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       module: 
         // Deleted
         device.createShaderModule({
-            code: glslShaders.compute(numParticles),
+            code: glslShaders.compute(numP),
+            transform: (glsl) => glslang.compileGLSL(glsl, "compute"),
+          }),
+      entryPoint: "main",
+    },
+  });
+
+  const computePipeline2 = device.createComputePipeline({
+    computeStage: {
+      module: 
+        // Deleted
+        device.createShaderModule({
+            code: glslShaders.compute2(numP),
             transform: (glsl) => glslang.compileGLSL(glsl, "compute"),
           }),
       entryPoint: "main",
@@ -154,8 +209,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   new Float32Array(simParamBuffer.getMappedRange()).set(simParamData);
   simParamBuffer.unmap();
 
-  const initialParticleData = new Float32Array(numParticles * 8);
-  for (let i = 0; i < numParticles; ++i) {
+  const initialParticleData = new Float32Array(numP * 8);
+  for (let i = 0; i < numP; ++i) {
     initialParticleData[8 * i + 0] = 2 * (Math.random() - 0.5);
     initialParticleData[8 * i + 1] = 2 * (Math.random() - 0.5);
     initialParticleData[8 * i + 2] = 2 * (Math.random() - 0.5); // Added
@@ -169,15 +224,28 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const particleBuffers: GPUBuffer[] = new Array(2);
   const particleBindGroups: GPUBindGroup[] = new Array(2);
   for (let i = 0; i < 2; ++i) {
+    // It calls device.createBuffer() which takes the size of the buffer and its usage. 
+    // It results in a GPU buffer object mapped at creation thanks to mappedAtCreation 
+    // set to true.
     particleBuffers[i] = device.createBuffer({
       size: initialParticleData.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
       mappedAtCreation: true,
     });
-    new Float32Array(particleBuffers[i].getMappedRange()).set(initialParticleData);
+    // The associated raw binary data buffer can be retrieved 
+    // by calling the GPU buffer method getMappedRange().
+    new Float32Array(particleBuffers[i].getMappedRange()).set(initialParticleData); // Write bytes to buffer
+    // At this point, the GPU buffer is mapped, meaning it is owned by the CPU, and 
+    // it’s accessible in read/write from JavaScript. In order for the GPU to access it, 
+    // it has to be unmapped which is as simple as calling gpuBuffer.unmap().
+    //    (The concept of mapped/unmapped is needed to prevent race conditions where 
+    //    GPU and CPU access memory at the same time.)
     particleBuffers[i].unmap();
   }
 
+  // Concepts of bind group layout and bind group are specific to WebGPU. 
+  // A bind group layout defines the input/output interface expected by a shader, 
+  // while a bind group represents the actual input/output data for a shader.
   for (let i = 0; i < 2; ++i) {
     particleBindGroups[i] = device.createBindGroup({
       layout: computePipeline.getBindGroupLayout(0),
@@ -239,12 +307,23 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
     renderPassDescriptor.colorAttachments[0].attachment = swapChain.getCurrentTexture().createView();
 
+  // Because the GPU is an independent coprocessor, all GPU commands are executed asynchronously. 
+  // This is why there is a list of GPU commands built up and sent in batches when needed. In WebGPU, 
+  // the GPU command encoder returned by device.createCommandEncoder()is the JavaScript object that 
+  // builds a batch of “buffered” commands that will be sent to the GPU at some point.
     const commandEncoder = device.createCommandEncoder();
     {
       const passEncoder = commandEncoder.beginComputePass();
       passEncoder.setPipeline(computePipeline);
       passEncoder.setBindGroup(0, particleBindGroups[t % 2]);
-      passEncoder.dispatch(numParticles);
+      passEncoder.dispatch(numP);
+      passEncoder.endPass();
+    }
+    {
+      const passEncoder = commandEncoder.beginComputePass();
+      passEncoder.setPipeline(computePipeline2);
+      passEncoder.setBindGroup(0, particleBindGroups[t % 2]);
+      passEncoder.dispatch(numP);
       passEncoder.endPass();
     }
     {
@@ -252,9 +331,13 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       passEncoder.setPipeline(renderPipeline);
       passEncoder.setBindGroup(0, uniformBindGroup);
       passEncoder.setVertexBuffer(0, particleBuffers[(t + 1) % 2]);
-      passEncoder.draw(3, numParticles, 0, 0);
+      passEncoder.draw(1, numP, 0, 0);
       passEncoder.endPass();
     }
+    // Finishing encoding commands by calling commandEncoder.finish() and submit 
+    // those to the GPU device command queue. The queue is responsible for handling 
+    // submissions done via device.defaultQueue.submit() with the GPU commands as arguments. 
+    // This will atomically execute all the commands stored in the array in order.
     device.defaultQueue.submit([commandEncoder.finish()]);
 
     ++t;
@@ -283,7 +366,7 @@ void main() {
   fragColor = vec4((normalize(fs_pos) + vec3(1.0)) / 2.0, 1.0);
 }`,
 
-  compute: (numParticles: number) => `#version 450
+  compute: (numP: number) => `#version 450
 struct Particle {
   vec4 pos;
   vec4 vel;
@@ -300,18 +383,18 @@ layout(std140, set = 0, binding = 0) uniform SimParams {
 } params;
 
 layout(std140, set = 0, binding = 1) buffer ParticlesA {
-  Particle particles[${numParticles} /* numParticles */];
+  Particle particles[${numP} /* numP */];
 } particlesA;
 
 layout(std140, set = 0, binding = 2) buffer ParticlesB {
-  Particle particles[${numParticles} /* numParticles */];
+  Particle particles[${numP} /* numP */];
 } particlesB;
 
 void main() {
   // https://github.com/austinEng/Project6-Vulkan-Flocking/blob/master/data/shaders/computeparticles/particle.comp
 
   uint index = gl_GlobalInvocationID.x;
-  if (index >= ${numParticles} /* numParticles */) { return; }
+  if (index >= ${numP} /* numP */) { return; }
 
   vec3 vPos = particlesA.particles[index].pos.xyz;
   vec3 vVel = particlesA.particles[index].vel.xyz;
@@ -324,7 +407,7 @@ void main() {
 
   vec3 pos;
   vec3 vel;
-  for (int i = 0; i < ${numParticles} /* numParticles */; ++i) {
+  for (int i = 0; i < ${numP} /* numP */; ++i) {
     if (i == index) { continue; }
     pos = particlesA.particles[i].pos.xyz;
     vel = particlesA.particles[i].vel.xyz;
@@ -356,6 +439,52 @@ void main() {
   // kinematic update
   vPos += vVel * params.deltaT;
 
+  // // Wrap around boundary
+  // if (vPos.x < -1.0) vPos.x = 1.0;
+  // if (vPos.x > 1.0) vPos.x = -1.0;
+  // if (vPos.y < -1.0) vPos.y = 1.0;
+  // if (vPos.y > 1.0) vPos.y = -1.0;
+  // if (vPos.z < -1.0) vPos.z = 1.0;
+  // if (vPos.z > 1.0) vPos.z = -1.0;
+
+  particlesB.particles[index].pos = vec4(vPos,1);
+
+  // Write back
+  particlesB.particles[index].vel = vec4(vVel,1);
+}`,
+compute2: (numP: number) => `#version 450
+struct Particle {
+  vec4 pos;
+  vec4 vel;
+};
+
+layout(std140, set = 0, binding = 0) uniform SimParams {
+  float deltaT;
+  float rule1Distance;
+  float rule2Distance;
+  float rule3Distance;
+  float rule1Scale;
+  float rule2Scale;
+  float rule3Scale;
+} params;
+
+layout(std140, set = 0, binding = 1) buffer ParticlesA {
+  Particle particles[${numP} /* numP */];
+} particlesA;
+
+layout(std140, set = 0, binding = 2) buffer ParticlesB {
+  Particle particles[${numP} /* numP */];
+} particlesB;
+
+void main() {
+  // https://github.com/austinEng/Project6-Vulkan-Flocking/blob/master/data/shaders/computeparticles/particle.comp
+
+  uint index = gl_GlobalInvocationID.x;
+  if (index >= ${numP} /* numP */) { return; }
+
+  vec3 vPos = particlesB.particles[index].pos.xyz;
+  vec3 vVel = particlesB.particles[index].vel.xyz;
+
   // Wrap around boundary
   if (vPos.x < -1.0) vPos.x = 1.0;
   if (vPos.x > 1.0) vPos.x = -1.0;
@@ -370,4 +499,3 @@ void main() {
   particlesB.particles[index].vel = vec4(vVel,1);
 }`,
 };
-
