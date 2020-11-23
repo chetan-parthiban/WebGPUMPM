@@ -94,13 +94,19 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       vertexBuffers: [
         {
           // instanced particles buffer
-          arrayStride: 4 * 4,
+          arrayStride: 8 * 4,
           stepMode: "instance",
           attributes: [
             {
               // instance position
               shaderLocation: 0,
               offset: 0,
+              format: "float4",
+            },
+            {
+              // instance velocity
+              shaderLocation: 1,
+              offset: 4 * 4,
               format: "float4",
             },
           ],
@@ -229,209 +235,146 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   simParamBuffer.unmap();
 
 
-  const volPData = new Float32Array(numP);  // An array storing the volume of each point
-  const mPData = new Float32Array(numP);  // An array storing the mass of each point
-  const posPData = new Float32Array(numP * 4);  // An array storing the position (xyz) and material (w) of each point
-  const vPData = new Float32Array(numP * 4); // An array storing the velocity of each point
-  const FPData = new Float32Array(numP * 16); // An array storing the deformation gradidnet (3x3 matrix, 4x4 here for padding purposes) of each point
-  const FePData = new Float32Array(numP * 16);  // An array storing the elastic component of teh deformation gradient (3x3 matrix, 4x4 here for padding purposes) of each point (for snow)
-  const FpPData = new Float32Array(numP * 16);  // An array storing the plastic component of teh deformation gradient (3x3 matrix, 4x4 here for padding purposes) of each point (for snow)
-  const JPData = new Float32Array(numP);  // An array storing the J attribute of each point (for fluid use)
-  const CPData = new Float32Array(numP * 16); // An array storing APIC's C matrix of each point
+  
+  
+      // const posPData = new Float32Array(numP * 4);  // Position (xyz) and material (w) of each point
+      // const vPData = new Float32Array(numP * 4); // An array storing the velocity of each point
+      // const mPData = new Float32Array(numP);  // An array storing the mass of each point
+  
+  // Particle Position (3 floats) (First vec4)
+  // Particle Material Type (1 float) (First vec4)
+  // Particle Velocity (3 floats) (Second vec4)
+  // Particle Mass (1 float) (Second vec4)
+        // NOTE: No need for padding here because we are 
+        // reading in the form of two vec4's in the struct 
+        // in shader code, which has alignment of 4 floats.
+  const p1Data = new Float32Array(numP * 8);
 
-  const mGData = new Float32Array(numG);  // Mass stored on the grid nodes
-  const vGNData = new Float32Array(numG * 4);  // New velocity stored on the grid nodes
-  const vGData = new Float32Array(numG * 4);  // Old velocity stored on the grid nodes
-  const forceData = new Float32Array(numG * 4);  // Force stored on the grid nodes
+      // const FPData = new Float32Array(numP * 16); // An array storing the deformation gradidnet (3x3 matrix, 4x4 here for padding purposes) of each point
+      // const FePData = new Float32Array(numP * 16);  // An array storing the elastic component of teh deformation gradient (3x3 matrix, 4x4 here for padding purposes) of each point (for snow)
+      // const FpPData = new Float32Array(numP * 16);  // An array storing the plastic component of teh deformation gradient (3x3 matrix, 4x4 here for padding purposes) of each point (for snow)
+      // const CPData = new Float32Array(numP * 16); // An array storing APIC's C matrix of each point
+      // const JPData = new Float32Array(numP);  // An array storing the J attribute of each point (for fluid use)
+      // const volPData = new Float32Array(numP);  // An array storing the volume of each point
+  
+  // Deformation Graident Of The Particle (9 floats)
+  // Elastic Component Of The Deformation Gradient Of The Particle (9 floats)
+  // Plastic Component Of The Deformation Gradient Of The Particle (9 floats)
+  // APIC's C Matrix Of The Particle (9 floats)
+  // J attribute Of The Particle (1 float)
+  // Volume Of The Particle (1 float)
+  // Padding to match the 3 floats alignment (1 float)
+  const p2Data = new Float32Array(numP * 39);
 
-  let matIdentity = new Matrix4();
+  
+      // const vGNData = new Float32Array(numG * 4);  // New velocity stored on the grid nodes
+      // const vGData = new Float32Array(numG * 4);  // Old velocity stored on the grid nodes
+      // const forceData = new Float32Array(numG * 4);  // Force stored on the grid nodes
+      // const mGData = new Float32Array(numG);  // Mass stored on the grid nodes
+
+  // New Velocity Stored On The Grid Node (3 floats)
+  // Old Velocity Stored On The Grid Node (3 floats)
+  // Force Stored On The Grid Node (3 floats)
+  // Mass Stored On The Grid Node (1 float)
+  // Padding to match the 3 floats alignment (1 float)
+  // Padding to match the 3 floats alignment (1 float)
+  const gData = new Float32Array(numP * 12);
+
+  let matIdentity = new Matrix3();
   let volumeP = h * h * h / 8.0;
   for (let i = 0; i < numP; i++) {
-    volPData[i] = volumeP;
-
+    // Fill in p1Data
     let matType = Math.floor(Math.random() * 3);
+    let mass = 0;
     switch (matType) {
       case 0:
-        mPData[i] = volumeP * rhoJello;
+        mass = volumeP * rhoJello;
         break;
       case 1:
-        mPData[i] = volumeP * rhoSnow;
+        mass = volumeP * rhoSnow;
         break;
       case 2:
-        mPData[i] = volumeP * rhoFluid;
+        mass = volumeP * rhoFluid;
         break;  
     }
 
-    posPData[4 * i + 0] = 2 * (Math.random() - 0.5);  // x coordinate
-    posPData[4 * i + 1] = 2 * (Math.random() - 0.5);  // y coordinate
-    posPData[4 * i + 2] = 2 * (Math.random() - 0.5);  // z coordinate
-    posPData[4 * i + 3] = matType;  // Material Type
+    p1Data[8 * i + 0] = 2 * (Math.random() - 0.5);  // x coordinate
+    p1Data[8 * i + 1] = 2 * (Math.random() - 0.5);  // y coordinate
+    p1Data[8 * i + 2] = 2 * (Math.random() - 0.5);  // z coordinate
+    p1Data[8 * i + 3] = matType;  // Material Type
+    p1Data[8 * i + 4] = 0;
+    p1Data[8 * i + 5] = 0;
+    p1Data[8 * i + 6] = 0;
+    p1Data[8 * i + 7] = mass;
 
-    vPData[4 * i + 0] = 0;
-    vPData[4 * i + 1] = 0;
-    vPData[4 * i + 2] = 0;
-    vPData[4 * i + 3] = 0;
-
-    for (let matrixIndex = 0; matrixIndex < 16; matrixIndex++) {
-      FPData[16 * i + matrixIndex] = matIdentity.elements[matrixIndex];
-      FePData[16 * i + matrixIndex] = matIdentity.elements[matrixIndex];
-      FpPData[16 * i + matrixIndex] = matIdentity.elements[matrixIndex];
+    // Fill in p2Data
+    for (let matrixIndex = 0; matrixIndex < 9; matrixIndex++) {
+      p2Data[39 * i + matrixIndex] = matIdentity.elements[matrixIndex]; // Deformation Graident Of The Particle (9 floats)
+      p2Data[39 * i + 9 + matrixIndex] = matIdentity.elements[matrixIndex]; // Elastic Component Of The Deformation Gradient Of The Particle (9 floats)
+      p2Data[39 * i + 18 + matrixIndex] = matIdentity.elements[matrixIndex];  // Plastic Component Of The Deformation Gradient Of The Particle (9 floats)
+      p2Data[39 * i + 27 + matrixIndex] = matIdentity.elements[matrixIndex];  // APIC's C Matrix Of The Particle (9 floats)
     }
 
-    JPData[i] = 1.0;
-
-    for (let matrixIndex = 0; matrixIndex < 16; matrixIndex++) {
-      CPData[16 * i + matrixIndex] = 0;
-    }
+    p2Data[39 * i + 36] = 1.0;  // J attribute Of The Particle (1 float)
+    p2Data[39 * i + 37] = volumeP;  // Volume Of The Particle (1 float)
+    p2Data[39 * i + 38] = 0;  // Padding to match the 3 floats alignment (1 float)
   }
 
   for (let i = 0; i < numG; i++) {
-    mGData[i] = 0;
-
-    vGNData[4 * i + 0] = 0;
-    vGNData[4 * i + 1] = 0;
-    vGNData[4 * i + 2] = 0;
-    vGNData[4 * i + 3] = 0;
-
-    vGData[4 * i + 0] = 0;
-    vGData[4 * i + 1] = 0;
-    vGData[4 * i + 2] = 0;
-    vGData[4 * i + 3] = 0;
-
-    forceData[4 * i + 0] = 0;
-    forceData[4 * i + 1] = 0;
-    forceData[4 * i + 2] = 0;
-    forceData[4 * i + 3] = 0;
+    // Fill in gData
+    gData[12 * i + 0] = 0;
+    gData[12 * i + 1] = 0;
+    gData[12 * i + 2] = 0;
+    gData[12 * i + 3] = 0;
+    gData[12 * i + 4] = 0;
+    gData[12 * i + 5] = 0;
+    gData[12 * i + 6] = 0;
+    gData[12 * i + 7] = 0;
+    gData[12 * i + 8] = 0;
+    gData[12 * i + 9] = 0;
+    gData[12 * i + 10] = 0;
+    gData[12 * i + 11] = 0;
   }
 
 
   // It calls device.createBuffer() which takes the size of the buffer and its usage. 
   // It results in a GPU buffer object mapped at creation thanks to mappedAtCreation 
   // set to true.
-  const volPBuffer = device.createBuffer({
-    size: volPData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
+  const p1Buffer = device.createBuffer({
+    size: p1Data.byteLength,
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
     mappedAtCreation: true,
   });
   // The associated raw binary data buffer can be retrieved 
   // by calling the GPU buffer method getMappedRange().
-  new Float32Array(volPBuffer.getMappedRange()).set(volPData); // Write bytes to buffer
+  new Float32Array(p1Buffer.getMappedRange()).set(p1Data); // Write bytes to buffer
   // At this point, the GPU buffer is mapped, meaning it is owned by the CPU, and 
   // it’s accessible in read/write from JavaScript. In order for the GPU to access it, 
   // it has to be unmapped which is as simple as calling gpuBuffer.unmap().
   //    (The concept of mapped/unmapped is needed to prevent race conditions where 
   //    GPU and CPU access memory at the same time.)
-  volPBuffer.unmap();
+  p1Buffer.unmap();
 
 
-  const mPBuffer = device.createBuffer({
-    size: mPData.byteLength,
+  const p2Buffer = device.createBuffer({
+    size: p2Data.byteLength,
     usage: GPUBufferUsage.STORAGE,
     mappedAtCreation: true,
   });
-  new Float32Array(mPBuffer.getMappedRange()).set(mPData);
-  mPBuffer.unmap();
+  new Float32Array(p2Buffer.getMappedRange()).set(p2Data);
+  p2Buffer.unmap();
 
 
-  const posPBuffer = device.createBuffer({
-    size: posPData.byteLength,
-    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(posPBuffer.getMappedRange()).set(posPData);
-  posPBuffer.unmap();
-
-
-  const vPBuffer = device.createBuffer({
-    size: vPData.byteLength,
-    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(vPBuffer.getMappedRange()).set(vPData);
-  vPBuffer.unmap();
-
-
-  const FPBuffer = device.createBuffer({
-    size: FPData.byteLength,
+  const gBuffer = device.createBuffer({
+    size: gData.byteLength,
     usage: GPUBufferUsage.STORAGE,
     mappedAtCreation: true,
   });
-  new Float32Array(FPBuffer.getMappedRange()).set(FPData);
-  FPBuffer.unmap();  
+  new Float32Array(gBuffer.getMappedRange()).set(gData);
+  gBuffer.unmap();
 
 
-  const FePBuffer = device.createBuffer({
-    size: FePData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(FePBuffer.getMappedRange()).set(FePData);
-  FePBuffer.unmap(); 
-
-
-  const FpPBuffer = device.createBuffer({
-    size: FpPData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(FpPBuffer.getMappedRange()).set(FpPData);
-  FpPBuffer.unmap();
-
-
-  const JPBuffer = device.createBuffer({
-    size: JPData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(JPBuffer.getMappedRange()).set(JPData);
-  JPBuffer.unmap();
-
-
-  const CPBuffer = device.createBuffer({
-    size: CPData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(CPBuffer.getMappedRange()).set(CPData);
-  CPBuffer.unmap();
-
-
-  const mGBuffer = device.createBuffer({
-    size: mGData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(mGBuffer.getMappedRange()).set(mGData);
-  mGBuffer.unmap();
-
-
-  const vGNBuffer = device.createBuffer({
-    size: vGNData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(vGNBuffer.getMappedRange()).set(vGNData);
-  vGNBuffer.unmap();
-
-
-  const vGBuffer = device.createBuffer({
-    size: vGData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(vGBuffer.getMappedRange()).set(vGData);
-  vGBuffer.unmap();
-
-
-  const forceBuffer = device.createBuffer({
-    size: forceData.byteLength,
-    usage: GPUBufferUsage.STORAGE,
-    mappedAtCreation: true,
-  });
-  new Float32Array(forceBuffer.getMappedRange()).set(forceData);
-  forceBuffer.unmap();
-
-
+ 
   // Concepts of bind group layout and bind group are specific to WebGPU. 
   // A bind group layout defines the input/output interface expected by a shader, 
   // while a bind group represents the actual input/output data for a shader.
@@ -448,108 +391,27 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     {
       binding: 1,
       resource: {
-        buffer: volPBuffer,
+        buffer: p1Buffer,
         offset: 0,
-        size: volPData.byteLength,
+        size: p1Data.byteLength,
       },
     }, 
     {
       binding: 2,
       resource: {
-        buffer: mPBuffer,
+        buffer: p2Buffer,
         offset: 0,
-        size: mPData.byteLength,
+        size: p2Data.byteLength,
       },
     },
     {
       binding: 3,
       resource: {
-        buffer: posPBuffer,
+        buffer: gBuffer,
         offset: 0,
-        size: posPData.byteLength,
+        size: gData.byteLength,
       },
     }
-    // ,
-    // {
-    //   binding: 4,
-    //   resource: {
-    //     buffer: vPBuffer,
-    //     offset: 0,
-    //     size: vPData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 5,
-    //   resource: {
-    //     buffer: FPBuffer,
-    //     offset: 0,
-    //     size: FPData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 6,
-    //   resource: {
-    //     buffer: FePBuffer,
-    //     offset: 0,
-    //     size: FePData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 7,
-    //   resource: {
-    //     buffer: FpPBuffer,
-    //     offset: 0,
-    //     size: FpPData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 8,
-    //   resource: {
-    //     buffer: JPBuffer,
-    //     offset: 0,
-    //     size: JPData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 9,
-    //   resource: {
-    //     buffer: CPBuffer,
-    //     offset: 0,
-    //     size: CPData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 10,
-    //   resource: {
-    //     buffer: mGBuffer,
-    //     offset: 0,
-    //     size: mGData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 11,
-    //   resource: {
-    //     buffer: vGNBuffer,
-    //     offset: 0,
-    //     size: vGNData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 12,
-    //   resource: {
-    //     buffer: vGBuffer,
-    //     offset: 0,
-    //     size: vGData.byteLength,
-    //   },
-    // },
-    // {
-    //   binding: 13,
-    //   resource: {
-    //     buffer: forceBuffer,
-    //     offset: 0,
-    //     size: forceData.byteLength,
-    //   },
-    // }
     ],
   });
 
@@ -610,7 +472,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
       passEncoder.setPipeline(renderPipeline);
       passEncoder.setBindGroup(0, uniformBindGroup);
-      passEncoder.setVertexBuffer(0, posPBuffer);
+      passEncoder.setVertexBuffer(0, p1Buffer);
       passEncoder.draw(1, numP, 0, 0);
       passEncoder.endPass();
     }
@@ -632,6 +494,7 @@ layout(set = 0, binding = 0) uniform Uniforms {
 } uniforms;
   
 layout(location = 0) in vec4 a_particlePos;
+layout(location = 1) in vec4 a_particleVel;
 layout(location = 0) out vec3 fs_pos;
 void main() {
   gl_Position = uniforms.modelViewProjectionMatrix * vec4(vec3(a_particlePos), 1.0);
@@ -646,10 +509,6 @@ void main() {
 }`,
 
   compute: (numPArg: number, numGArg: number) => `#version 450
-// struct Particle {
-//   vec4 pos;
-//   vec4 vel;
-// };
 
 layout(std140, set = 0, binding = 0) uniform SimParams {
   float dt; // Timestep
@@ -689,57 +548,42 @@ layout(std140, set = 0, binding = 0) uniform SimParams {
   float PADDING_2; // IGNORE
 } params;
 
-layout(std430, set = 0, binding = 1) buffer VOLPVEC {
-  float data[${numPArg}];
-} volPVec;
+struct ParticleStruct1 {
+  vec4 pos;
+  vec4 v;
+};
 
-layout(std430, set = 0, binding = 2) buffer MPVEC {
-  float data[${numPArg}];
-} mPVec;
+struct ParticleStruct2 {
+  mat3 F;
+  mat3 Fe;
+  mat3 Fp;
+  mat3 C;
+  float J;
+  float vol;
+  float PADDING_1;  // (IGNORE)
+};
 
-layout(std430, set = 0, binding = 3) buffer POSPVEC {
-  vec4 data[${numPArg}];
-} posPVec;
+struct GridNodeStruct {
+  vec3 vN;
+  vec3 v;
+  vec3 force;
+  vec3 m;
+  float PADDING_1;  // (IGNORE)
+  float PADDING_2;  // (IGNORE)
+};
 
-// layout(std430, set = 0, binding = 4) buffer VPVEC {
-//   vec4 data[${numPArg}];
-// } vPVec;
+layout(std430, set = 0, binding = 1) buffer PARTICLES1 {
+  ParticleStruct1 data[${numPArg}];
+} particles1;
 
-// layout(std430, set = 0, binding = 5) buffer FPVEC {
-//   mat4 data[${numPArg}];
-// } FPVec;
+layout(std430, set = 0, binding = 2) buffer PARTICLES2 {
+  ParticleStruct2 data[${numPArg}];
+} particles2;
 
-// layout(std430, set = 0, binding = 6) buffer FEPVEC {
-//   mat4 data[${numPArg}];
-// } FePVec;
+layout(std430, set = 0, binding = 3) buffer GRIDNODES {
+  GridNodeStruct data[${numGArg}];
+} gridNodes;
 
-// layout(std430, set = 0, binding = 7) buffer FPPVEC {
-//   mat4 data[${numPArg}];
-// } FpPVec;
-
-// layout(std140, set = 0, binding = 8) buffer JPVEC {
-//   float data[${numPArg}];
-// } JPVec;
-
-// layout(std140, set = 0, binding = 9) buffer CPVEC {
-//   mat4 data[${numPArg}];
-// } CPVec;
-
-// layout(std140, set = 0, binding = 10) buffer MGVEC {
-//   float data[${numGArg}];
-// } mGVec;
-
-// layout(std140, set = 0, binding = 11) buffer VGNVEC {
-//   vec4 data[${numGArg}];
-// } vGNVec;
-
-// layout(std140, set = 0, binding = 12) buffer VGVEC {
-//   vec4 data[${numGArg}];
-// } vGVec;
-
-// layout(std140, set = 0, binding = 13) buffer FORCEVEC {
-//   vec4 data[${numGArg}];
-// } forceVec;
 
 void main() {
   uint index = gl_GlobalInvocationID.x;
