@@ -11,6 +11,7 @@ export const description = 'A GPU compute particle simulation that mimics \
 
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // console.log(JSON.stringify()); // For debugging purposes
+
   // Simulation Parameters
   const dt = 0.001; // Timestep
   const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
@@ -18,7 +19,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // Grid Parameters
   const minCorner = new Vector3(-1.0, -1.0, -1.0); // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
   const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
-  const h = 0.4; // Cell width of the grid
+  const h = 0.04; // Cell width of the grid
   const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid points in the x-direction
   const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid points in the y-direction
   const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid points in the z-direction
@@ -41,10 +42,6 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const rhoFluid = 997; // Density of the points' material for fluid
   const numP = 1000;  // Total number of points
 
-  // Test
-  // let matA = new Matrix4();
-  // console.log(JSON.stringify(matA)); // For debugging purposes
-  // console.log(JSON.stringify(matA.elements[5])); // For debugging purposes
 
   // Calling navigator.gpu.requestAdapter() returns a JavaScript promise
   // that will asynchronously resolve with a GPU adapter.
@@ -124,7 +121,6 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const computePipeline = device.createComputePipeline({
     computeStage: {
       module: 
-        // Deleted
         device.createShaderModule({
             code: glslShaders.compute(numP, numG),
             transform: (glsl) => glslang.compileGLSL(glsl, "compute"),
@@ -133,6 +129,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     },
   });
 
+  /* -------------Example For Adding "Kernel"/Compute Shader (Part 1)------------------- */
   // const computePipeline2 = device.createComputePipeline({
   //   computeStage: {
   //     module: 
@@ -169,7 +166,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
 
 
-  // test: uniform projection matrix for render pipeline
+  // uniform projection matrix for render pipeline
   const uniformBufferSize = 4 * 16; // 4x4 matrix
 
   const uniformBuffer = device.createBuffer({
@@ -234,53 +231,34 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   new Float32Array(simParamBuffer.getMappedRange()).set(simParamData);
   simParamBuffer.unmap();
 
-
-  
-  
-      // const posPData = new Float32Array(numP * 4);  // Position (xyz) and material (w) of each point
-      // const vPData = new Float32Array(numP * 4); // An array storing the velocity of each point
-      // const mPData = new Float32Array(numP);  // An array storing the mass of each point
   
   // Particle Position (3 floats) (First vec4)
   // Particle Material Type (1 float) (First vec4)
   // Particle Velocity (3 floats) (Second vec4)
   // Particle Mass (1 float) (Second vec4)
-        // NOTE: No need for padding here because we are 
-        // reading in the form of two vec4's in the struct 
-        // in shader code, which has alignment of 4 floats.
   const p1Data = new Float32Array(numP * 8);
-
-      // const FPData = new Float32Array(numP * 16); // An array storing the deformation gradidnet (3x3 matrix, 4x4 here for padding purposes) of each point
-      // const FePData = new Float32Array(numP * 16);  // An array storing the elastic component of teh deformation gradient (3x3 matrix, 4x4 here for padding purposes) of each point (for snow)
-      // const FpPData = new Float32Array(numP * 16);  // An array storing the plastic component of teh deformation gradient (3x3 matrix, 4x4 here for padding purposes) of each point (for snow)
-      // const CPData = new Float32Array(numP * 16); // An array storing APIC's C matrix of each point
-      // const JPData = new Float32Array(numP);  // An array storing the J attribute of each point (for fluid use)
-      // const volPData = new Float32Array(numP);  // An array storing the volume of each point
   
-  // Deformation Graident Of The Particle (9 floats)
-  // Elastic Component Of The Deformation Gradient Of The Particle (9 floats)
-  // Plastic Component Of The Deformation Gradient Of The Particle (9 floats)
-  // APIC's C Matrix Of The Particle (9 floats)
+  // Deformation Graident Of The Particle (12 floats)
+  // Elastic Component Of The Deformation Gradient Of The Particle (12 floats)
+  // Plastic Component Of The Deformation Gradient Of The Particle (12 floats)
+  // APIC's C Matrix Of The Particle (12 floats)
   // J attribute Of The Particle (1 float)
   // Volume Of The Particle (1 float)
-  // Padding to match the 3 floats alignment (1 float)
-  const p2Data = new Float32Array(numP * 39);
+  // Padding to match the 4 floats alignment (1 float)
+  // Padding to match the 4 floats alignment (1 float)
+  const p2Data = new Float32Array(numP * 52);
 
-  
-      // const vGNData = new Float32Array(numG * 4);  // New velocity stored on the grid nodes
-      // const vGData = new Float32Array(numG * 4);  // Old velocity stored on the grid nodes
-      // const forceData = new Float32Array(numG * 4);  // Force stored on the grid nodes
-      // const mGData = new Float32Array(numG);  // Mass stored on the grid nodes
-
-  // New Velocity Stored On The Grid Node (3 floats)
-  // Old Velocity Stored On The Grid Node (3 floats)
-  // Force Stored On The Grid Node (3 floats)
+  // New Velocity Stored On The Grid Node (4 floats)
+  // Old Velocity Stored On The Grid Node (4 floats)
+  // Force Stored On The Grid Node (4 floats)
   // Mass Stored On The Grid Node (1 float)
-  // Padding to match the 3 floats alignment (1 float)
-  // Padding to match the 3 floats alignment (1 float)
-  const gData = new Float32Array(numP * 12);
+  // Padding to match the 4 floats alignment (1 float)
+  // Padding to match the 4 floats alignment (1 float)
+  // Padding to match the 4 floats alignment (1 float)
+  const gData = new Float32Array(numG * 16);
 
-  let matIdentity = new Matrix3();
+
+  let matIdentity : number[] = [1, 0, 0, 0,/*Col 1*/ 0, 1, 0, 0,/*Col 2*/ 0, 0, 1, 0/*Col 3*/];
   let volumeP = h * h * h / 8.0;
   for (let i = 0; i < numP; i++) {
     // Fill in p1Data
@@ -298,42 +276,47 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
         break;  
     }
 
-    p1Data[8 * i + 0] = 2 * (Math.random() - 0.5);  // x coordinate
-    p1Data[8 * i + 1] = 2 * (Math.random() - 0.5);  // y coordinate
-    p1Data[8 * i + 2] = 2 * (Math.random() - 0.5);  // z coordinate
-    p1Data[8 * i + 3] = matType;  // Material Type
-    p1Data[8 * i + 4] = 0;
-    p1Data[8 * i + 5] = 0;
-    p1Data[8 * i + 6] = 0;
-    p1Data[8 * i + 7] = mass;
+    p1Data[8 * i + 0] = 2 * (Math.random() - 0.5);  // Particle Position X Component (1 float)
+    p1Data[8 * i + 1] = 2 * (Math.random() - 0.5);  // Particle Position Y Component (1 float)
+    p1Data[8 * i + 2] = 2 * (Math.random() - 0.5);  // Particle Position Z Component (1 float)
+    p1Data[8 * i + 3] = matType;  // Particle Material Type (1 float)
+    p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
+    p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)
+    p1Data[8 * i + 6] = 0;  // Particle Velocity Z Component (1 float)
+    p1Data[8 * i + 7] = mass; // Particle Mass (1 float)
 
     // Fill in p2Data
-    for (let matrixIndex = 0; matrixIndex < 9; matrixIndex++) {
-      p2Data[39 * i + matrixIndex] = matIdentity.elements[matrixIndex]; // Deformation Graident Of The Particle (9 floats)
-      p2Data[39 * i + 9 + matrixIndex] = matIdentity.elements[matrixIndex]; // Elastic Component Of The Deformation Gradient Of The Particle (9 floats)
-      p2Data[39 * i + 18 + matrixIndex] = matIdentity.elements[matrixIndex];  // Plastic Component Of The Deformation Gradient Of The Particle (9 floats)
-      p2Data[39 * i + 27 + matrixIndex] = matIdentity.elements[matrixIndex];  // APIC's C Matrix Of The Particle (9 floats)
+    for (let matrixIndex = 0; matrixIndex < 12; matrixIndex++) {
+      p2Data[52 * i + matrixIndex] = matIdentity[matrixIndex]; // Deformation Graident Of The Particle (12 floats)
+      p2Data[52 * i + 12 + matrixIndex] = matIdentity[matrixIndex]; // Elastic Component Of The Deformation Gradient Of The Particle (12 floats)
+      p2Data[52 * i + 24 + matrixIndex] = matIdentity[matrixIndex];  // Plastic Component Of The Deformation Gradient Of The Particle (12 floats)
+      p2Data[52 * i + 36 + matrixIndex] = matIdentity[matrixIndex];  // APIC's C Matrix Of The Particle (12 floats)
     }
 
-    p2Data[39 * i + 36] = 1.0;  // J attribute Of The Particle (1 float)
-    p2Data[39 * i + 37] = volumeP;  // Volume Of The Particle (1 float)
-    p2Data[39 * i + 38] = 0;  // Padding to match the 3 floats alignment (1 float)
+    p2Data[52 * i + 48] = 1.0;  // J attribute Of The Particle (1 float)
+    p2Data[52 * i + 49] = volumeP;  // Volume Of The Particle (1 float)
+    p2Data[52 * i + 50] = 0;  // Padding to match the 4 floats alignment (1 float)
+    p2Data[52 * i + 51] = 0;  // Padding to match the 4 floats alignment (1 float)
   }
 
   for (let i = 0; i < numG; i++) {
     // Fill in gData
-    gData[12 * i + 0] = 0;
-    gData[12 * i + 1] = 0;
-    gData[12 * i + 2] = 0;
-    gData[12 * i + 3] = 0;
-    gData[12 * i + 4] = 0;
-    gData[12 * i + 5] = 0;
-    gData[12 * i + 6] = 0;
-    gData[12 * i + 7] = 0;
-    gData[12 * i + 8] = 0;
-    gData[12 * i + 9] = 0;
-    gData[12 * i + 10] = 0;
-    gData[12 * i + 11] = 0;
+    gData[16 * i + 0] = 0;  // New Velocity Stored On The Grid Node (X Component) (1 float)
+    gData[16 * i + 1] = 0;  // New Velocity Stored On The Grid Node (Y Component) (1 float)
+    gData[16 * i + 2] = 0;  // New Velocity Stored On The Grid Node (Z Component) (1 float)
+    gData[16 * i + 3] = 0;  // PADDING (1 float)
+    gData[16 * i + 4] = 0;  // Old Velocity Stored On The Grid Node (X Component) (1 float)
+    gData[16 * i + 5] = 0;  // Old Velocity Stored On The Grid Node (Y Component) (1 float)
+    gData[16 * i + 6] = 0;  // Old Velocity Stored On The Grid Node (Z Component) (1 float)
+    gData[16 * i + 7] = 0;  // PADDING (1 float)
+    gData[16 * i + 8] = 0;  // Force Stored On The Grid Node (X Component) (1 float)
+    gData[16 * i + 9] = 0;  // Force Stored On The Grid Node (Y Component) (1 float)
+    gData[16 * i + 10] = 0;  // Force Stored On The Grid Node (Z Component) (1 float)
+    gData[16 * i + 11] = 0;  // // Mass Stored On The Grid Node (1 float)
+    gData[16 * i + 12] = 0;  // PADDING (1 float)
+    gData[16 * i + 13] = 0;  // PADDING (1 float)
+    gData[16 * i + 14] = 0;  // PADDING (1 float)
+    gData[16 * i + 15] = 0;  // PADDING (1 float)
   }
 
 
@@ -461,6 +444,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       passEncoder.dispatch(GPUGridDimX, GPUGridDimY, GPUGridDimZ);
       passEncoder.endPass();
     }
+  /* -------------Example For Adding "Kernel"/Compute Shader (Part 2)------------------- */    
     // {
     //   // const passEncoder = commandEncoder.beginComputePass();
     //   // passEncoder.setPipeline(computePipeline2);
@@ -512,9 +496,6 @@ void main() {
 
 layout(std140, set = 0, binding = 0) uniform SimParams {
   float dt; // Timestep
-  // vec3 gravity;  // Gravity
-  // vec3 minCorner; // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
-  // vec3 maxCorner;  // Max corner of the grid
   float gravityX;  // Gravity (x-component)
   float gravityY;  // Gravity (y-component)
   float gravityZ;  // Gravity (z-component)
@@ -549,27 +530,29 @@ layout(std140, set = 0, binding = 0) uniform SimParams {
 } params;
 
 struct ParticleStruct1 {
-  vec4 pos;
-  vec4 v;
+  vec4 pos; // (pos.xyz => Particle Position, pos.w => Particle Material Type)
+  vec4 v; // (v.xyz => Particle Velocity, v.w => Particle Mass)
 };
 
 struct ParticleStruct2 {
-  mat3 F;
-  mat3 Fe;
-  mat3 Fp;
-  mat3 C;
-  float J;
-  float vol;
+  mat3 F; // Deformation Graident Of The Particle
+  mat3 Fe;  // Elastic Component Of The Deformation Gradient Of The Particle
+  mat3 Fp;  // Plastic Component Of The Deformation Gradient Of The Particle
+  mat3 C; // APIC's C Matrix Of The Particle
+  float J;  // J attribute Of The Particle
+  float vol;  // Volume Of The Particle
   float PADDING_1;  // (IGNORE)
+  float PADDING_2;  // (IGNORE)
 };
 
 struct GridNodeStruct {
-  vec3 vN;
-  vec3 v;
-  vec3 force;
-  vec3 m;
+  vec3 vN;  // New Velocity Stored On The Grid Node
+  vec3 v; // Old Velocity Stored On The Grid Node
+  vec3 force; // Force Stored On The Grid Node
+  float m;  // Mass Stored On The Grid Node
   float PADDING_1;  // (IGNORE)
   float PADDING_2;  // (IGNORE)
+  float PADDING_3;  // (IGNORE)
 };
 
 layout(std430, set = 0, binding = 1) buffer PARTICLES1 {
@@ -588,12 +571,14 @@ layout(std430, set = 0, binding = 3) buffer GRIDNODES {
 void main() {
   uint index = gl_GlobalInvocationID.x;
   if (index >= ${numPArg}) { return; }
-
-  // particlesB.particles[index].pos = vec4(vPos,1);
-
-  // // Write back
-  // particlesB.particles[index].vel = vec4(vVel,1);
+  
+  vec3 dY = gridNodes.data[30].v * 0.1;
+  float dY2 = gridNodes.data[30].m * 0.1;
+  vec3 dY3 = particles2.data[index].C[2] * 0.01;
+  particles1.data[index].pos += vec4(dY3, 0);
 }`,
+
+  /* -------------Example For Adding "Kernel"/Compute Shader (Part 3)------------------- */
 // compute2: (numPArg: number, numGArg: number) => `#version 450
 // struct Particle {
 //   vec4 pos;
