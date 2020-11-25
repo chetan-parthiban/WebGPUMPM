@@ -60,18 +60,6 @@ async function loadExample(hashName: string) {
     descriptionNode.innerHTML = example.description;
     descriptionContainer.appendChild(descriptionNode);
 
-    const shaders = useWGSL ? example.wgslShaders : example.glslShaders;
-    if (!shaders) {
-        descriptionContainer.appendChild(document.createElement('br'));
-        descriptionContainer.appendChild(document.createElement("br"));
-        descriptionContainer.appendChild(
-          document.createTextNode(
-            "Sorry, this example hasn't been written yet."
-          )
-        );
-        return;
-    }
-
     const frame = await example.init(canvas, useWGSL);
     if (!frame) return;
     currentCanvas = canvas;
