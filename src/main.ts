@@ -111,20 +111,20 @@ async function loadExample(hashName: string) {
     const frame = await example.init(canvas, useWGSL);
     if (!frame) return;
 
-    fetch(`./src/examples/${name}.ts`).then(async res => {
-        const div = document.createElement("div");
-        fullSource.appendChild(div);
+    // fetch(`./src/examples/${name}.ts`).then(async res => {
+    //     const div = document.createElement("div");
+    //     fullSource.appendChild(div);
 
-        const configuration: CodeMirror.EditorConfiguration = {
-            value: await res.text(),
-            readOnly: "nocursor",
-            lineNumbers: true,
-            lineWrapping: true,
-            theme: "monokai",
-            mode: "text/typescript",
-        };
-        CodeMirror(div, configuration);
-    });
+    //     const configuration: CodeMirror.EditorConfiguration = {
+    //         value: await res.text(),
+    //         readOnly: "nocursor",
+    //         lineNumbers: true,
+    //         lineWrapping: true,
+    //         theme: "monokai",
+    //         mode: "text/typescript",
+    //     };
+    //     CodeMirror(div, configuration);
+    // });
 
     currentCanvas = canvas;
 
