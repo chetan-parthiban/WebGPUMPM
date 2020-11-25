@@ -10,44 +10,8 @@ const canvasContainer = document.getElementById('canvas-container');
 const shaderEditor = document.getElementById('shader-editor');
 const fullSource = document.getElementById('full-source');
 
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/javascript/javascript';
-
 function removeClassName(el: HTMLElement, className: string) {
     el.className = (el.className || '').replace(className, '');
-}
-
-interface ShaderEditor extends CodeMirror.Editor {
-  updatedSource: (source: any) => void,
-};
-
-// @ts-ignore
-CodeMirror.commands.save = function(editor: ShaderEditor) {
-    editor.updatedSource(editor.getValue());
-}
-
-if (navigator.gpu) {
-    setShaderRegisteredCallback(async (source, updatedSource) => {
-        const el = document.createElement('div');
-        shaderEditor.appendChild(el);
-        el.className = 'shaderEditor';
-
-        const configuration: CodeMirror.EditorConfiguration = {
-            value: source,
-            lineNumbers: true,
-            lineWrapping: true,
-            theme: 'monokai',
-        };
-        const editor = CodeMirror(el, configuration) as ShaderEditor;
-        editor.updatedSource = updatedSource;
-
-        const codeMirrorContainer = el.firstElementChild;
-        const updateButton = document.createElement('button');
-        updateButton.className = "updateShaderBtn";
-        updateButton.innerHTML = "Update shader";
-        updateButton.onclick = () => updatedSource(editor.getValue());
-        codeMirrorContainer.prepend(updateButton);
-    });
 }
 
 let currentCanvas = undefined;
@@ -110,24 +74,7 @@ async function loadExample(hashName: string) {
 
     const frame = await example.init(canvas, useWGSL);
     if (!frame) return;
-
-    // fetch(`./src/examples/${name}.ts`).then(async res => {
-    //     const div = document.createElement("div");
-    //     fullSource.appendChild(div);
-
-    //     const configuration: CodeMirror.EditorConfiguration = {
-    //         value: await res.text(),
-    //         readOnly: "nocursor",
-    //         lineNumbers: true,
-    //         lineWrapping: true,
-    //         theme: "monokai",
-    //         mode: "text/typescript",
-    //     };
-    //     CodeMirror(div, configuration);
-    // });
-
     currentCanvas = canvas;
-
 
     // camera
     var cameraChange = mat4.create();
