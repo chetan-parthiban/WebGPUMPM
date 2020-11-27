@@ -32,7 +32,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // create and compile pipelines for rendering and computation
   const renderPipeline = createRenderingPipeline(renderingShaders, device, glslang);
   const computePipeline = createComputePipeline(exampleShaders.compute(numP, numG), device, glslang);
-  const p2gPipeline = createComputePipeline(p2gShader.compute(numP, numG), device, glslang);
+  const p2gPipeline = createComputePipeline(p2gShader.p2g(numP, numG), device, glslang);
 
   // create GPU Buffers
   const simParamBuffer = createBuffer(simParamData, GPUBufferUsage.UNIFORM, device);  

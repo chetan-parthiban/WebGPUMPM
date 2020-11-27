@@ -1,5 +1,5 @@
 export const p2gShader = {
-    compute: (numPArg: number, numGArg: number) => `#version 450
+    p2g: (numPArg: number, numGArg: number) => `#version 450
   
   layout(std140, set = 0, binding = 0) uniform SimParams {
     float dt; // Timestep
@@ -108,7 +108,7 @@ void main() {
     float m = 0;
     vec3 v = vec3(0,0,0);
     vec3 minCorner = vec3(params.minCornerX, params.minCornerY, params.minCornerZ);
-    // vec3 posG = vec3(baseNodeI, baseNodeJ, baseNodeK) * params.h + minCorner;
+    // vec3 posG = vec3(baseNodeI, baseNodeJ, baseNodeK) * params.h + minCorner; // APIC
     for (int p = 0; p < ${numPArg}; p++) {
         vec3 posP_index_space = (particles1.data[p].pos.xyz - minCorner) / params.h;
         
@@ -117,11 +117,10 @@ void main() {
         computeWeights1D_G(baseNodeJ, posP_index_space.y, wJ);
         computeWeights1D_G(baseNodeK, posP_index_space.z, wK);
         
-        float weight = wI * wJ * wK * particles1.data[p].v.w; // check w/ jacky
-
+        float weight = wI * wJ * wK * particles1.data[p].v.w; 
         m += weight; 
-        v += weight * particles1.data[p].v.xyz;
-        // v += weight * (particles1.data[p].v.xyz + particles2.data[p].C * (posG - particles1.data[p].pos.xyz));
+        v += weight * particles1.data[p].v.xyz; // not APIC
+        // v += weight * (particles1.data[p].v.xyz + particles2.data[p].C * (posG - particles1.data[p].pos.xyz)); // APIC
     }
 
     int nodeID = coordinateToId(baseNodeI, baseNodeJ, baseNodeK);

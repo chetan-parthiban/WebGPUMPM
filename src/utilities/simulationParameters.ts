@@ -28,7 +28,7 @@ export const gamma = 7;  // parameter for fluid
 export const rhoJello = 1000.0;  // Density of the points' material for jello
 export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
-export const numP = 1000;  // Total number of points
+export const numP = 50;  // Total number of points
 
 export const simParamData = new Float32Array([
     dt, // Timestep
