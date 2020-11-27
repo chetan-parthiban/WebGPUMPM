@@ -1,6 +1,9 @@
-export const p2gShader = {
-    p2g: (numPArg: number, numGArg: number) => `#version 450
-  
+export const setBoundaryVelocitiesShader = {
+    
+/* ---------------------------------------------------------------------------- */
+/* ----------------------------- setBoundaryVelocities ------------------------ */
+/* ---------------------------------------------------------------------------- */
+  setBoundaryVelocities: (numPArg: number, numGArg: number) => `#version 450
   layout(std140, set = 0, binding = 0) uniform SimParams {
     float dt; // Timestep
     float gravityX;  // Gravity (x-component)
@@ -35,12 +38,10 @@ export const p2gShader = {
     float PADDING_1; // IGNORE
     float PADDING_2; // IGNORE
   } params;
-  
   struct ParticleStruct1 {
     vec4 pos; // (pos.xyz => Particle Position, pos.w => Particle Material Type)
     vec4 v; // (v.xyz => Particle Velocity, v.w => Particle Mass)
   };
-  
   struct ParticleStruct2 {
     mat3 F; // Deformation Graident Of The Particle
     mat3 Fe;  // Elastic Component Of The Deformation Gradient Of The Particle
@@ -51,7 +52,6 @@ export const p2gShader = {
     float PADDING_1;  // (IGNORE)
     float PADDING_2;  // (IGNORE)
   };
-  
   struct GridNodeStruct {
     vec3 vN;  // New Velocity Stored On The Grid Node
     vec3 v; // Old Velocity Stored On The Grid Node
@@ -61,70 +61,57 @@ export const p2gShader = {
     float PADDING_2;  // (IGNORE)
     float PADDING_3;  // (IGNORE)
   };
-  
   layout(std430, set = 0, binding = 1) buffer PARTICLES1 {
     ParticleStruct1 data[${numPArg}];
   } particles1;
-  
   layout(std430, set = 0, binding = 2) buffer PARTICLES2 {
     ParticleStruct2 data[${numPArg}];
   } particles2;
-  
   layout(std430, set = 0, binding = 3) buffer GRIDNODES {
     GridNodeStruct data[${numGArg}];
   } gridNodes;
-  
-  
-  int coordinateToId(int x, int y, int z) {
-    return x + int(params.nxG) * y + int(params.nxG) * int(params.nyG) * z;
+  int coordinateToId(ivec3 c) {
+    return c[0] + int(params.nxG) * c[1] + int(params.nxG) * int(params.nyG) * c[2];
   }
-  
-// Compute weights (when each thread handles a grid node) (Version 1: Tested)
-void computeWeights1D_G(int node, float x, out float w) {
-  // x is the particle's index-space position and can represent particle's index-space position in x, y, or z direction,
-  // x is assumed to be scaled in the index space (in other words, the grid has cell width of length 1)
-  // node is the grid node's coordinate in x, y, or z direction in index space
-  float d = x - node;
-  if (abs(d) < 1.5) {
-    if (d >= 0.5 && d < 1.5) {  // [0.5, 1.5)
-      w = 0.5 * (1.5 - d) * (1.5 - d);
-    } else if (d > -0.5 && d < 0.5) { // (-0.5, 0.5)
-      w = 0.75 - d * d;
-    } else {  // (-1.5, -0.5]
-      w = 0.5 * (1.5 + d) * (1.5 + d);
-    }
-  } else {
-    w = 0;
-  }
-}
-
-
-void main() {
-    int baseNodeI = int(gl_GlobalInvocationID.x);
-    int baseNodeJ = int(gl_GlobalInvocationID.y);
-    int baseNodeK = int(gl_GlobalInvocationID.z);
-    if (baseNodeI >= params.nxG || baseNodeJ >= params.nyG || baseNodeK >= params.nzG) { return; }
+  void main() {
+    uint indexI = gl_GlobalInvocationID.x;
+    uint indexJ = gl_GlobalInvocationID.y;
+    uint indexK = gl_GlobalInvocationID.z;
+    if (indexI >= params.nxG || indexJ >= params.nyG || indexK >= params.nzG) { return; }
     
-    float m = 0;
-    vec3 v = vec3(0,0,0);
-    vec3 minCorner = vec3(params.minCornerX, params.minCornerY, params.minCornerZ);
-    // vec3 posG = vec3(baseNodeI, baseNodeJ, baseNodeK) * params.h + minCorner; // APIC
-    for (int p = 0; p < ${numPArg}; p++) {
-        vec3 posP_index_space = (particles1.data[p].pos.xyz - minCorner) / params.h;
-        
-        float wI, wJ, wK;
-        computeWeights1D_G(baseNodeI, posP_index_space.x, wI);
-        computeWeights1D_G(baseNodeJ, posP_index_space.y, wJ);
-        computeWeights1D_G(baseNodeK, posP_index_space.z, wK);
-        
-        float weight = wI * wJ * wK * particles1.data[p].v.w; 
-        m += weight; 
-        v += weight * particles1.data[p].v.xyz; // not APIC
-        // v += weight * (particles1.data[p].v.xyz + particles2.data[p].C * (posG - particles1.data[p].pos.xyz)); // APIC
+    int baseNodeI = int(indexI);
+    int baseNodeJ = int(indexJ);
+    int baseNodeK = int(indexK);
+    int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
+    // Setting Boundary Velocities To Zero
+    int thickness = 3;  // Change the thickness parameter here
+    // Bottom (non-sticky)
+    if (baseNodeJ < thickness) {
+      gridNodes.data[nodeID].vN.y = 0.0;
     }
-
-    int nodeID = coordinateToId(baseNodeI, baseNodeJ, baseNodeK);
-    gridNodes.data[nodeID].m = m;
-    gridNodes.data[nodeID].v = v/(m+0.0000000001); // constant to handle division by 0
-}`,
+    // Left (non-sticky)
+    if (baseNodeI < thickness) {
+      gridNodes.data[nodeID].vN.x = 0.0;
+    }
+    // Right (non-sticky)
+    if (baseNodeI >= params.nxG - thickness) {
+      gridNodes.data[nodeID].vN.x = 0.0;
+    }
+    // Back (non-sticky)
+    if (baseNodeK < thickness) {
+      gridNodes.data[nodeID].vN.z = 0.0;
+    }
+    // Front (non-sticky)
+    if (baseNodeK >= params.nzG - thickness) {
+      gridNodes.data[nodeID].vN.z = 0.0;
+    }
+    // Top (sticky)
+    if (baseNodeJ >= params.nyG - thickness) {
+      gridNodes.data[nodeID].vN = vec3(0.0);
+    }
+    // Test Speed
+    if (nodeID < ${numPArg}) {
+      particles1.data[nodeID].pos += vec4(vec3(0, 0.01, 0), 0);
+    }
+  }`,
 };
