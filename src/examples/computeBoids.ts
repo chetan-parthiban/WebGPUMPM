@@ -1,6 +1,7 @@
 import glslangModule from '../glslang';
 import { mat4 } from 'gl-matrix';
 import { exampleShaders } from '../shaders/shaders';
+import { p2gShader } from '../shaders/p2g';
 import { renderingShaders } from '../shaders/rendering';
 import { createRenderingPipeline, createComputePipeline } from '../utilities/shaderCreation';
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
@@ -31,6 +32,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // create and compile pipelines for rendering and computation
   const renderPipeline = createRenderingPipeline(renderingShaders, device, glslang);
   const computePipeline = createComputePipeline(exampleShaders.compute(numP, numG), device, glslang);
+  const p2gPipeline = createComputePipeline(p2gShader.compute(numP, numG), device, glslang);
 
   // create GPU Buffers
   const simParamBuffer = createBuffer(simParamData, GPUBufferUsage.UNIFORM, device);  
@@ -57,6 +59,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     // record and execute command sequence on the gpu
     const commandEncoder = device.createCommandEncoder();
     runComputePipeline(commandEncoder, computePipeline, bindGroup, numP, 1, 1);
+    runComputePipeline(commandEncoder, p2gPipeline, bindGroup, nxG, nyG, nzG);
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);
 
