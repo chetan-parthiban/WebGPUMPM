@@ -108,7 +108,7 @@ void main() {
     float m = 0;
     vec3 v = vec3(0,0,0);
     vec3 minCorner = vec3(params.minCornerX, params.minCornerY, params.minCornerZ);
-    vec3 posG = vec3(baseNodeI, baseNodeJ, baseNodeK) * params.h + minCorner;
+    // vec3 posG = vec3(baseNodeI, baseNodeJ, baseNodeK) * params.h + minCorner;
     for (int p = 0; p < ${numPArg}; p++) {
         vec3 posP_index_space = (particles1.data[p].pos.xyz - minCorner) / params.h;
         
@@ -118,8 +118,10 @@ void main() {
         computeWeights1D_G(baseNodeK, posP_index_space.z, wK);
         
         float weight = wI * wJ * wK * particles1.data[p].v.w; // check w/ jacky
+
         m += weight; 
-        v += weight * (particles1.data[p].v.xyz + particles2.data[p].C * (posG - particles1.data[p].pos.xyz));
+        v += weight * particles1.data[p].v.xyz;
+        // v += weight * (particles1.data[p].v.xyz + particles2.data[p].C * (posG - particles1.data[p].pos.xyz));
     }
 
     int nodeID = coordinateToId(baseNodeI, baseNodeJ, baseNodeK);
