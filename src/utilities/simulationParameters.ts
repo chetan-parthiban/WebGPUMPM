@@ -28,7 +28,7 @@ export const gamma = 7;  // parameter for fluid
 export const rhoJello = 1000.0;  // Density of the points' material for jello
 export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
-export const numP = 50;  // Total number of points
+export const numP = 64;  // Total number of points
 
 export const simParamData = new Float32Array([
     dt, // Timestep
@@ -96,7 +96,7 @@ export const simParamData = new Float32Array([
   let volumeP = h * h * h / 8.0;
   for (let i = 0; i < numP; i++) {
     // Fill in p1Data
-    let matType = Math.floor(Math.random() * 3);
+    let matType = 0;
     let mass = 0;
     switch (matType) {
       case 0:
@@ -110,9 +110,9 @@ export const simParamData = new Float32Array([
         break;  
     }
 
-    p1Data[8 * i + 0] = 2 * (Math.random() - 0.5);  // Particle Position X Component (1 float)
-    p1Data[8 * i + 1] = 2 * (Math.random() - 0.5);  // Particle Position Y Component (1 float)
-    p1Data[8 * i + 2] = 2 * (Math.random() - 0.5);  // Particle Position Z Component (1 float)
+    p1Data[8 * i + 0] = Math.random() * 0.08 - 0.04;  // Particle Position X Component (1 float)
+    p1Data[8 * i + 1] = Math.random() * 0.08 + 0.8;  // Particle Position Y Component (1 float)
+    p1Data[8 * i + 2] = Math.random() * 0.08 - 0.04;  // Particle Position Z Component (1 float)
     p1Data[8 * i + 3] = matType;  // Particle Material Type (1 float)
     p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
     p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)

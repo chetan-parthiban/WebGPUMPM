@@ -17,6 +17,6 @@ export const renderingShaders = {
   layout(location = 0) in vec3 fs_pos;
   layout(location = 0) out vec4 fragColor;
   void main() {
-    fragColor = vec4((normalize(fs_pos) + vec3(1.0)) / 2.0, 1.0);
+    fragColor = vec4(1,1,1,1);
   }`,
 };

@@ -8,6 +8,8 @@ import { addGravityShader } from '../shaders/addGravity';
 import { clearGridDataShader } from '../shaders/clearGridData';
 import { setBoundaryVelocitiesShader } from '../shaders/setBoundaryVelocities';
 import { updateGridVelocityShader } from '../shaders/updateGridVelocity';
+import { g2pShader } from '../shaders/g2p';
+import { evolveFandJShader } from '../shaders/evolveFandJ';
 import { createRenderingPipeline, createComputePipeline } from '../utilities/shaderCreation';
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
 import { createBindGroup } from '../utilities/bindGroupCreation';
@@ -43,7 +45,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const setBoundaryVelocitiesPipeline = createComputePipeline(setBoundaryVelocitiesShader.setBoundaryVelocities(numP, numG), device, glslang);
   const updateGridVelocityPipeline = createComputePipeline(updateGridVelocityShader.updateGridVelocity(numP, numG), device, glslang);
   const p2gPipeline = createComputePipeline(p2gShader.p2g(numP, numG), device, glslang);
-
+  const g2pPipeline = createComputePipeline(g2pShader.g2p(numP, numG), device, glslang);
+  const evolveFandJPipeline = createComputePipeline(evolveFandJShader.evolveFandJ(numP, numG), device, glslang);
 
   // create GPU Buffers
   const simParamBuffer = createBuffer(simParamData, GPUBufferUsage.UNIFORM, device);  
@@ -69,13 +72,15 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     
     // record and execute command sequence on the gpu
     const commandEncoder = device.createCommandEncoder();
-    runComputePipeline(commandEncoder, computePipeline, bindGroup, numP, 1, 1);
+    // runComputePipeline(commandEncoder, computePipeline, bindGroup, numP, 1, 1);
     runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
     runComputePipeline(commandEncoder, p2gPipeline, bindGroup, nxG, nyG, nzG);
     runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
     runComputePipeline(commandEncoder, addMaterialForcePipeline, bindGroup, nxG, nyG, nzG);
     runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
     runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
+    runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
+    runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);
 

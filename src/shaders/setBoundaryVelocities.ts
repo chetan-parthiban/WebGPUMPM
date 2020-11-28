@@ -109,9 +109,9 @@ export const setBoundaryVelocitiesShader = {
     if (baseNodeJ >= params.nyG - thickness) {
       gridNodes.data[nodeID].vN = vec3(0.0);
     }
-    // Test Speed
-    if (nodeID < ${numPArg}) {
-      particles1.data[nodeID].pos += vec4(vec3(0, 0.01, 0), 0);
-    }
+    // // Test Speed
+    // if (nodeID < ${numPArg}) {
+    //   particles1.data[nodeID].pos += vec4(vec3(0, 0.01, 0), 0);
+    // }
   }`,
 };
