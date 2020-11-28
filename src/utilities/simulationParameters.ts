@@ -7,7 +7,7 @@ export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
  // Grid Parameters
 export const minCorner = new Vector3(-1.0, -1.0, -1.0); // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
 export const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
-export const h = 0.04; // Cell width of the grid
+export const h = 0.08; // Cell width of the grid
 export const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid points in the x-direction
 export const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid points in the y-direction
 export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid points in the z-direction
@@ -110,9 +110,9 @@ export const simParamData = new Float32Array([
         break;  
     }
 
-    p1Data[8 * i + 0] = Math.random() * 0.08 - 0.04;  // Particle Position X Component (1 float)
-    p1Data[8 * i + 1] = Math.random() * 0.08 + 0.8;  // Particle Position Y Component (1 float)
-    p1Data[8 * i + 2] = Math.random() * 0.08 - 0.04;  // Particle Position Z Component (1 float)
+    p1Data[8 * i + 0] = Math.random() * (2 * h) - h;  // Particle Position X Component (1 float)
+    p1Data[8 * i + 1] = Math.random() * (2 * h) + 0.65;  // Particle Position Y Component (1 float)
+    p1Data[8 * i + 2] = Math.random() * (2 * h) - h;  // Particle Position Z Component (1 float)
     p1Data[8 * i + 3] = matType;  // Particle Material Type (1 float)
     p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
     p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)

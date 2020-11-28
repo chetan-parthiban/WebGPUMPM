@@ -14,7 +14,7 @@ import { createRenderingPipeline, createComputePipeline } from '../utilities/sha
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
 import { createBindGroup } from '../utilities/bindGroupCreation';
 import { getCameraTransformFunc } from '../utilities/cameraUtils'
-import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG } from '../utilities/simulationParameters';
+import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt } from '../utilities/simulationParameters';
 import * as boilerplate from '../utilities/webgpuBoilerplate';
 import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
 
@@ -72,15 +72,17 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     
     // record and execute command sequence on the gpu
     const commandEncoder = device.createCommandEncoder();
-    // runComputePipeline(commandEncoder, computePipeline, bindGroup, numP, 1, 1);
-    runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
-    runComputePipeline(commandEncoder, p2gPipeline, bindGroup, nxG, nyG, nzG);
-    runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
-    runComputePipeline(commandEncoder, addMaterialForcePipeline, bindGroup, nxG, nyG, nzG);
-    runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
-    runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
-    runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
-    runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
+    // // runComputePipeline(commandEncoder, computePipeline, bindGroup, numP, 1, 1);
+    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
+      runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, p2gPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, addMaterialForcePipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
+      runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
+    }
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);
 
