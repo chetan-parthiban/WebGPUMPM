@@ -55,7 +55,7 @@ export const testShader = {
     vec3 vN;  // New Velocity Stored On The Grid Node
     vec3 v; // Old Velocity Stored On The Grid Node
     vec3 force; // Force Stored On The Grid Node
-    float m;  // Mass Stored On The Grid Node
+    uint m;  // Mass Stored On The Grid Node
     float PADDING_1;  // (IGNORE)
     float PADDING_2;  // (IGNORE)
     float PADDING_3;  // (IGNORE)
@@ -83,9 +83,10 @@ export const testShader = {
     int baseNodeK = int(indexK);
     int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
     
-    // Test Speed
+    // Atomic Add Float Test
     if (nodeID < ${numPArg}) {
-      particles1.data[nodeID].pos += vec4(vec3(0, 0.01, 0), 0);
+      particles1.data[nodeID].pos += vec4(vec3(0, uintBitsToFloat(gridNodes.data[33].m), 0), 0);
+      particles1.data[nodeID].pos += vec4(-vec3(0, 0.03141 * ${numGArg}, 0), 0);
     }
   }`,
 };

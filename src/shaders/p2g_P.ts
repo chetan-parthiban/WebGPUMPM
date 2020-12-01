@@ -131,14 +131,17 @@ export const p2g_PShader = {
     return c[0] + int(params.nxG) * c[1] + int(params.nxG) * int(params.nyG) * c[2];
   }
 
-  void atomicAddF(inout uint atomicVar, float val) {
-    uint old = atomicVar;
-    uint assumed;
-    do {
-      assumed = old;
-      old = atomicCompSwap(atomicVar, assumed, floatBitsToUint(uintBitsToFloat(assumed) + val));
-    } while (assumed != old);
-  }
+  // void atomicAddF(inout uint atomicVar, float val) {
+  //   uint old = atomicVar;
+  //   uint assumed;
+  //   do {
+  //     assumed = old;
+  //     old = atomicCompSwap(atomicVar, assumed, floatBitsToUint(uintBitsToFloat(assumed) + val));
+  //   } while (assumed != old);
+  // }
+
+  #define ADD(a,b) ((a) + (b))
+  #define POW(a,b) { int c; float t=a; for(c=1;c<b;c++){t*=a;} t;}
 
   void main() {
     uint indexI = gl_GlobalInvocationID.x;
@@ -151,11 +154,18 @@ export const p2g_PShader = {
     int baseNodeK = int(indexK);
     int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
     vec3 minCorner = vec3(params.minCornerX, params.minCornerY, params.minCornerZ);
-    
-    // Test
-    if (nodeID < ${numPArg}) {
-      atomicAddF(gridNodes.data[33].m, 0.03141);
-    }
+
+    // Atomic Add Float Test
+    float val = 0.03141;
+
+    uint old = gridNodes.data[33].m;
+    uint assumed;
+    do {
+      assumed = old;
+      old = atomicCompSwap(gridNodes.data[33].m, assumed, floatBitsToUint(uintBitsToFloat(assumed) + val));
+    } while (assumed != old);
+
+    // }
     // mat3 A;
     // A[0] = vec3(1, -1, 0);
     // A[1] = vec3(0, -2, 1);
