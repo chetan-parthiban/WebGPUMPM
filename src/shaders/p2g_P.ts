@@ -50,10 +50,10 @@ export const p2g_PShader = {
     float PADDING_2;  // (IGNORE)
   };
   struct GridNodeStruct {
-    vec3 vN;  // New Velocity Stored On The Grid Node
-    vec3 v; // Old Velocity Stored On The Grid Node
-    vec3 force; // Force Stored On The Grid Node
-    uint m;  // Mass Stored On The Grid Node
+    uvec3 vN;  // New Velocity Stored On The Grid Node (Represented as uvec3 here in order to work with ATOMICADDVEC3 Macros)
+    uvec3 v; // Old Velocity Stored On The Grid Node (Represented as uvec3 here in order to work with ATOMICADDVEC3 Macros)
+    uvec3 force; // Force Stored On The Grid Node (Represented as uvec3 here in order to work with ATOMICADDVEC3 Macros)
+    uint m;  // Mass Stored On The Grid Node (Represented as uint here in order to work with ATOMICADD Macros)
     float PADDING_1;  // (IGNORE)
     float PADDING_2;  // (IGNORE)
     float PADDING_3;  // (IGNORE)
@@ -131,58 +131,67 @@ export const p2g_PShader = {
     return c[0] + int(params.nxG) * c[1] + int(params.nxG) * int(params.nyG) * c[2];
   }
 
-  // void atomicAddF(inout uint atomicVar, float val) {
-  //   uint old = atomicVar;
-  //   uint assumed;
-  //   do {
-  //     assumed = old;
-  //     old = atomicCompSwap(atomicVar, assumed, floatBitsToUint(uintBitsToFloat(assumed) + val));
-  //   } while (assumed != old);
-  // }
+  // Macros for atomic add for a float
+  #define ATOMICADD(atomicVar, val) { \
+    uint old = atomicVar; \
+    uint assumed; \
+    do { \
+      assumed = old; \
+      old = atomicCompSwap(atomicVar, assumed, floatBitsToUint(uintBitsToFloat(assumed) + val)); \
+    } while (assumed != old); \
+  }
 
-  #define ADD(a,b) ((a) + (b))
-  #define POW(a,b) { int c; float t=a; for(c=1;c<b;c++){t*=a;} t;}
+  // Macros for atomic add for vec3
+  #define ATOMICADDVEC3(atomicVar, val) { \
+    ATOMICADD(atomicVar.x, val.x); \
+    ATOMICADD(atomicVar.y, val.y); \
+    ATOMICADD(atomicVar.z, val.z); \
+  }
 
   void main() {
-    uint indexI = gl_GlobalInvocationID.x;
-    uint indexJ = gl_GlobalInvocationID.y;
-    uint indexK = gl_GlobalInvocationID.z;
-    if (indexI >= params.nxG || indexJ >= params.nyG || indexK >= params.nzG) { return; }
-    
-    int baseNodeI = int(indexI);
-    int baseNodeJ = int(indexJ);
-    int baseNodeK = int(indexK);
-    int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
+    uint index = gl_GlobalInvocationID.x;
+    if (index >= ${numPArg}) { return; }
+
     vec3 minCorner = vec3(params.minCornerX, params.minCornerY, params.minCornerZ);
+    vec3 posP_index_space = (particles1.data[index].pos.xyz - minCorner) / params.h;
+    vec3 wI, wJ, wK;
+    vec3 dwI, dwJ, dwK;
+    int baseNodeI, baseNodeJ, baseNodeK;
+    computeWeights1D_P(posP_index_space.x, wI, dwI, baseNodeI);
+    computeWeights1D_P(posP_index_space.y, wJ, dwJ, baseNodeJ);
+    computeWeights1D_P(posP_index_space.z, wK, dwK, baseNodeK);
 
-    // Atomic Add Float Test
-    float val = 0.03141;
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        for (int k = 0; k < 3; k++) {
+          int nodeI = baseNodeI + i;
+          int nodeJ = baseNodeJ + j;
+          int nodeK = baseNodeK + k;
+          int nodeID = coordinateToId(ivec3(nodeI, nodeJ, nodeK));
+          float weightIJK = wI[i] * wJ[j] * wK[k];
 
-    uint old = gridNodes.data[33].m;
-    uint assumed;
-    do {
-      assumed = old;
-      old = atomicCompSwap(gridNodes.data[33].m, assumed, floatBitsToUint(uintBitsToFloat(assumed) + val));
-    } while (assumed != old);
+          float mP = particles1.data[index].v.w;
+          vec3 vP = particles1.data[index].v.xyz;
+          // Splat Mass
+          float massSplat = mP * weightIJK;
+          ATOMICADD(gridNodes.data[nodeID].m, massSplat);
 
-    // }
-    // mat3 A;
-    // A[0] = vec3(1, -1, 0);
-    // A[1] = vec3(0, -2, 1);
-    // A[2] = vec3(1, 0, -1);
-    // SVD_mats testSVD = svd(A);
-    // mat3 UVTranspose = testSVD.U * transpose(testSVD.V);
-    // vec3 UVTranspose_expected_col0 = vec3(0.9174, -0.1735, 0.3582);
-    // vec3 UVTranspose_expected_col1 = vec3(-0.2480, -0.9531, 0.1735);
-    // vec3 UVTranspose_expected_col2 = vec3(0.3113, -0.2480, -0.9174);
-    // // SVD Tests
-    // particles1.data[index].pos += vec4(UVTranspose_expected_col0, 0);
-    // particles1.data[index].pos += vec4(-UVTranspose[0], 0);
-    // particles1.data[index].pos += vec4(UVTranspose_expected_col1, 0);
-    // particles1.data[index].pos += vec4(-UVTranspose[1], 0);
-    // particles1.data[index].pos += vec4(UVTranspose_expected_col2, 0);
-    // particles1.data[index].pos += vec4(-UVTranspose[2], 0);
-    // particles1.data[index].pos += vec4(vec3(params.nxG, params.nyG, params.nzG), 0);
-    // particles1.data[index].pos += vec4(-vec3(51, 50.5, 51), 0);
+          // Splat Momentum
+          // IF NOT APIC
+          vec3 momentumSplat = massSplat * vP;  // Essentially (weightIJK * mP) * vP
+          ATOMICADDVEC3(gridNodes.data[nodeID].v, momentumSplat);
+          // // IF APIC
+          // vec3 posG = vec3(float(nodeI), float(nodeJ), float(nodeK)) * params.h + minCorner;
+          // vec3 momentumSplat = (weightIJK * particles1.data[index].v.w)
+          //  * (particles1.data[index].v.xyz + particles2.data[index].C * (posG - particles1.data[index].pos.xyz));
+          //  ATOMICADDVEC3(gridNodes.data[nodeID].v, momentumSplat);
+        }
+      }
+    }
+
+    /* ------------------------------------------------------------------------- */
+    // Note: The mass division part of p2g is combined into the addGravity shader
+    /* ------------------------------------------------------------------------- */
+
   }`,
 };

@@ -7,7 +7,7 @@ export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
  // Grid Parameters
 export const minCorner = new Vector3(-1.0, -1.0, -1.0); // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
 export const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
-export const h = 0.08; // Cell width of the grid
+export const h = 0.04; // Cell width of the grid
 export const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid points in the x-direction
 export const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid points in the y-direction
 export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid points in the z-direction
@@ -28,7 +28,7 @@ export const gamma = 7;  // parameter for fluid
 export const rhoJello = 1000.0;  // Density of the points' material for jello
 export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
-export const numP = 1000; // 64;  // Total number of points
+export const numP = 128000; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
     dt, // Timestep
@@ -96,7 +96,7 @@ export const simParamData = new Float32Array([
   let volumeP = h * h * h / 8.0;
   for (let i = 0; i < numP; i++) {
     // Fill in p1Data
-    let matType = 0;
+    let matType = 2;
     let mass = 0;
     switch (matType) {
       case 0:
@@ -110,9 +110,13 @@ export const simParamData = new Float32Array([
         break;  
     }
 
-    p1Data[8 * i + 0] = Math.random() * 2 - 1; // Math.random() * (2 * h) - h;  // Particle Position X Component (1 float)
-    p1Data[8 * i + 1] = Math.random() * 2 - 1; // Math.random() * (2 * h) + 0.65;  // Particle Position Y Component (1 float)
-    p1Data[8 * i + 2] = Math.random() * 2 - 1; // Math.random() * (2 * h) - h;  // Particle Position Z Component (1 float)
+    // p1Data[8 * i + 0] = Math.random() * (8 * h) - 4 * h; // Particle Position X Component (1 float)
+    // p1Data[8 * i + 1] = Math.random() * (16 * h) + (0.5 - 8 * h); // Particle Position Y Component (1 float)
+    // p1Data[8 * i + 2] = Math.random() * (8 * h) - 4 * h; // Particle Position Z Component (1 float)
+
+    p1Data[8 * i + 0] = Math.random() * (10 * h) + 5 * h - 1; // Particle Position X Component (1 float)
+    p1Data[8 * i + 1] = Math.random() * (40 * h) + 5 * h - 1; // Particle Position Y Component (1 float)
+    p1Data[8 * i + 2] = Math.random() * (40 * h) + 4 * h - 1; // Particle Position Z Component (1 float)
     p1Data[8 * i + 3] = matType;  // Particle Material Type (1 float)
     p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
     p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)

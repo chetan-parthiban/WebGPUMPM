@@ -82,12 +82,14 @@ export const addGravityShader = {
     int baseNodeJ = int(indexJ);
     int baseNodeK = int(indexK);
     int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
+
+    /* ------------------------------------------------------------------------- */
+    // Note: The mass division part from p2g
+    /* ------------------------------------------------------------------------- */
+    gridNodes.data[nodeID].v /= (gridNodes.data[nodeID].m + 0.0000000001);
+
     // Adding Gravity Force
     vec3 gravity = vec3(params.gravityX, params.gravityY, params.gravityZ);
     gridNodes.data[nodeID].force += gridNodes.data[nodeID].m * gravity;
-    // Test Speed
-    // if (nodeID < ${numPArg}) {
-    //   particles1.data[nodeID].pos += vec4(vec3(0, 0.01, 0), 0);
-    // }
   }`,
 };

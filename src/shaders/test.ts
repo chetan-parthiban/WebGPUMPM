@@ -55,7 +55,7 @@ export const testShader = {
     vec3 vN;  // New Velocity Stored On The Grid Node
     vec3 v; // Old Velocity Stored On The Grid Node
     vec3 force; // Force Stored On The Grid Node
-    uint m;  // Mass Stored On The Grid Node
+    float m;  // Mass Stored On The Grid Node
     float PADDING_1;  // (IGNORE)
     float PADDING_2;  // (IGNORE)
     float PADDING_3;  // (IGNORE)
@@ -85,8 +85,13 @@ export const testShader = {
     
     // Atomic Add Float Test
     if (nodeID < ${numPArg}) {
-      particles1.data[nodeID].pos += vec4(vec3(0, uintBitsToFloat(gridNodes.data[33].m), 0), 0);
-      particles1.data[nodeID].pos += vec4(-vec3(0, 0.03141 * ${numGArg}, 0), 0);
+      // particles1.data[nodeID].pos += vec4(vec3(0, uintBitsToFloat(gridNodes.data[33].m), 0), 0);
+      particles1.data[nodeID].pos += vec4(vec3(0, gridNodes.data[33].m, 0), 0);
+      particles1.data[nodeID].pos += vec4(-vec3(0, -8.0 * ${numPArg}, 0), 0);
+
+      // particles1.data[nodeID].pos += vec4(uintBitsToFloat(gridNodes.data[33].force), 0);
+      particles1.data[nodeID].pos += vec4(gridNodes.data[33].force, 0);
+      particles1.data[nodeID].pos += vec4(-vec3(-1.0, 2.0, -5.0) * ${numPArg}, 0);
     }
   }`,
 };
