@@ -108,6 +108,21 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     }
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderCubePipeline, uniformBindGroup2, verticesBuffer, 36);
     // runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
+
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        passEncoder.setPipeline(renderCubePipeline);
+        passEncoder.setBindGroup(0, uniformBindGroup2);
+        passEncoder.setVertexBuffer(0, verticesBuffer);
+        passEncoder.draw(36, 3, 0, 0);
+
+        passEncoder.setPipeline(renderPipeline);
+        passEncoder.setBindGroup(0, uniformBindGroup);
+        passEncoder.setVertexBuffer(0, p1Buffer);
+        passEncoder.draw(1, numP, 0, 0);
+
+        passEncoder.endPass();
+
+
     device.defaultQueue.submit([commandEncoder.finish()]);
 
     ++t;

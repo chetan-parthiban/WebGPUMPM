@@ -16,7 +16,7 @@ export const renderCubeShaders = {
     mat4 view = uniforms.matrices[0];
     mat4 invView = uniforms.matrices[1];
     mat4 proj = uniforms.matrices[2];
-    mat4 scale = mat4(vec4(2, 0, 0, 0), vec4(0, 2, 0, 0), vec4(0, 0, 2, 0), vec4(0, 0, 0, 1));
+    mat4 scale = mat4(vec4(1, 0, 0, 0), vec4(0, 1, 0, 0), vec4(0, 0, 1, 0), vec4(0, 0, 0, 1));
     
     gl_Position = proj * view * scale * position;
     fragLightVec = invView * vec4(0,0,0,1) - position;

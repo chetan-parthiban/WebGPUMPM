@@ -32,7 +32,7 @@ export const renderingShaders = {
     float pi = 3.1415926535;
 
     // fragColor = vec4(a+b*cos(2*pi*(c*t+d)), 1);
-    fragColor = vec4(1,1,1,1);
+    fragColor = vec4(0,0,0,1);
     // fragColor = vec4(fs_vel.xyz, 1);
   }`,
 };
