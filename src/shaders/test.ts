@@ -1,8 +1,8 @@
-export const addGravityShader = {
-    /* ---------------------------------------------------------------------------- */
-/* ----------------------------- addGravity ----------------------------------- */
+export const testShader = {
 /* ---------------------------------------------------------------------------- */
-  addGravity: (numPArg: number, numGArg: number) => `#version 450
+/* ------------------------------------ test ---------------------------------- */
+/* ---------------------------------------------------------------------------- */
+  test: (numPArg: number, numGArg: number) => `#version 450
   layout(std140, set = 0, binding = 0) uniform SimParams {
     float dt; // Timestep
     float gravityX;  // Gravity (x-component)
@@ -82,14 +82,16 @@ export const addGravityShader = {
     int baseNodeJ = int(indexJ);
     int baseNodeK = int(indexK);
     int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
+    
+    // Atomic Add Float Test
+    if (nodeID < ${numPArg}) {
+      // particles1.data[nodeID].pos += vec4(vec3(0, uintBitsToFloat(gridNodes.data[33].m), 0), 0);
+      particles1.data[nodeID].pos += vec4(vec3(0, gridNodes.data[33].m, 0), 0);
+      particles1.data[nodeID].pos += vec4(-vec3(0, -8.0 * ${numPArg}, 0), 0);
 
-    /* ------------------------------------------------------------------------- */
-    // Note: The mass division part from p2g
-    /* ------------------------------------------------------------------------- */
-    gridNodes.data[nodeID].v /= (gridNodes.data[nodeID].m + 0.0000000001);
-
-    // Adding Gravity Force
-    vec3 gravity = vec3(params.gravityX, params.gravityY, params.gravityZ);
-    gridNodes.data[nodeID].force += gridNodes.data[nodeID].m * gravity;
+      // particles1.data[nodeID].pos += vec4(uintBitsToFloat(gridNodes.data[33].force), 0);
+      particles1.data[nodeID].pos += vec4(gridNodes.data[33].force, 0);
+      particles1.data[nodeID].pos += vec4(-vec3(-1.0, 2.0, -5.0) * ${numPArg}, 0);
+    }
   }`,
 };
