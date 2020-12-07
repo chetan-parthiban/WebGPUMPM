@@ -92,7 +92,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     // }
 
     // Atomics Version
-    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
+    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 20.0); i++) {
       runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
       runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
       runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
