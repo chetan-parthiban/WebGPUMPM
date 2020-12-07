@@ -15,12 +15,12 @@ MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accu
 ## More WebGPU Samples to get started with WebGPU
 
 This repo was built from the  [WebGPU Samples Repo](//austineng.github.io/webgpu-samples/), a set of WGSL
-and SPIR-V compatible samples demonstrating the use of the[WebGPU API](//webgpu.dev). Please see the current implementation status at
-[webgpu.io](//webgpu.io). Thank you so much Austin and Kai for your help with this project!
+and SPIR-V compatible samples demonstrating the use of the [WebGPU API](//webgpu.dev). Please see the current implementation status at
+[webgpu.io](//webgpu.io). **Thank you so much Austin and Kai for your help with this project!**
 
 These samples run in Chrome Canary behind the flag `--enable-unsafe-webgpu`. If
 something isn't working, please file an issue
-[here](https://github.com/austinEng/webgpu-samples/issues).
+[here](https://github.com/austinEng/webgpu-samples/issues). You can get Chrome Canary [here](https://www.google.com/intl/en_in/chrome/canary/).
 
 ## Building this project
 This project is built with [Typescript](https://www.typescriptlang.org/)
