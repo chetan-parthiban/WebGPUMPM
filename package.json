@@ -17,6 +17,7 @@
     "dat.gui": "^0.7.6",
     "gl-matrix": "^3.2.1",
     "three": "^0.122.0",
+    "webgpu": "^0.1.16",
     "webgpu-live-shader-module": "austinEng/webgpu-live-shader-module#c77fc714",
     "webgpu-shader-module-transform": "austinEng/webgpu-shader-module-transform#d332ac20"
   },

@@ -21,6 +21,7 @@ import { getCameraTransformFunc } from '../utilities/cameraUtils'
 import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt } from '../utilities/simulationParameters';
 import * as boilerplate from '../utilities/webgpuBoilerplate';
 import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
+import { createQueryBuffer, createTimestampQuerySet } from '../utilities/benchmarking';
 
 export const title = 'Material Point Method';
 export const description = 'A hybrid Eulerian/Lagrangian method for the simulation \
@@ -61,6 +62,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const p2Buffer = createBuffer(p2Data, GPUBufferUsage.STORAGE, device); 
   const gBuffer = createBuffer(gData, GPUBufferUsage.STORAGE, device); 
   const uniformBuffer = createEmptyUniformBuffer(4 * 16, device); // 4x4 matrix projection matrix for render pipeline
+  const querySetBuffer = createQueryBuffer(9, device);
 
   // create GPU Bind Groups
   const uniformBindGroup = createBindGroup([uniformBuffer], renderPipeline, device);
@@ -70,6 +72,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   let getTransformationMatrix = getCameraTransformFunc(canvas);
 
   let t = 0;
+  let query = createTimestampQuerySet(device, 9);
   return function frame(timestamp, view) {
 
     // prepare for the render pass
@@ -78,7 +81,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     renderPassDescriptor.colorAttachments[0].attachment = swapChain.getCurrentTexture().createView();
     
     // record and execute command sequence on the gpu
-    const commandEncoder = device.createCommandEncoder();
+    const commandEncoder = device.createCommandEncoder({measureExecutionTime: true});
     // // Naive Version
     // for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
     //   runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
@@ -92,17 +95,26 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     // }
 
     // Atomics Version
-    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
-      runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
-    }
-
+    // for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
+    // commandEncoder.writeTimestamp(query, 0);
+    runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
+    // commandEncoder.writeTimestamp(query, 1);
+    runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
+    // commandEncoder.writeTimestamp(query, 2);
+    runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
+    // commandEncoder.writeTimestamp(query, 3);
+    runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1);
+    // commandEncoder.writeTimestamp(query, 4);
+    runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
+    // commandEncoder.writeTimestamp(query, 5);
+    runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
+    // commandEncoder.writeTimestamp(query, 6);
+    runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
+    // commandEncoder.writeTimestamp(query, 7);
+    runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
+    // commandEncoder.writeTimestamp(query, 8);
+    // }
+    
     // Test
     // runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
     // runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, nxG, nyG, nzG);
@@ -110,7 +122,6 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);
-
     ++t;
   }
 }

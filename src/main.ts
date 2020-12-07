@@ -39,8 +39,8 @@ async function loadExample(hashName: string) {
     const example = await exampleLoader();
 
     const canvas = document.createElement('canvas');
-    canvas.width = 600;
-    canvas.height = 600;
+    canvas.width = 950;
+    canvas.height = 950;
     canvasContainer.appendChild(canvas);
 
     const useWGSL =
