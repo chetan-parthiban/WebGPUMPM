@@ -5,10 +5,10 @@ MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accu
 <img src="img/jello_fluid.gif" width="600">
 <div class="row">
   <div class="column">
-    <img src="gifs/fluidsnow.gif" width="300">
+    <img src="gifs/fluidsnow.gif" width="200">
   </div>
   <div class="column">
-    <img src="gifs/jello.gif" width="300">
+    <img src="gifs/jello.gif" width="200">
   </div>
 </div>
 
