@@ -1,17 +1,20 @@
-# WebGPU Samples
+# WebGPU Material Point Method
 
-The [WebGPU Samples](//austineng.github.io/webgpu-samples/) are a set of WGSL
-and SPIR-V compatible samples demonstrating the use of the
-[WebGPU API](//webgpu.dev). Please see the current implementation status at
-[webgpu.io](//webgpu.io). SPIR-V compatible samples will be removed when WGSL
-is fully implemented.
+MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accurate materials. In this project, we show off the compute capabilities of WebGPU to implement a MPM simulator allowing for the real-time simulation of 200k particles from a selection of three materials (Fluids, Jellos, and Snow).
+
+
+## More WebGPU Samples to get started with WebGPU
+
+This repo was built from the  [WebGPU Samples Repo](//austineng.github.io/webgpu-samples/), a set of WGSL
+and SPIR-V compatible samples demonstrating the use of the[WebGPU API](//webgpu.dev). Please see the current implementation status at
+[webgpu.io](//webgpu.io). Thank you so much Austin and Kai for your help with this project!
 
 These samples run in Chrome Canary behind the flag `--enable-unsafe-webgpu`. If
 something isn't working, please file an issue
 [here](https://github.com/austinEng/webgpu-samples/issues).
 
-## Building
-`webgpu-samples` is built with [Typescript](https://www.typescriptlang.org/)
+## Building this project
+This project is built with [Typescript](https://www.typescriptlang.org/)
 and compiled using [webpack](https://webpack.js.org/). Building the project
 requires an installation of [Node.js](https://nodejs.org/en/).
 
@@ -23,7 +26,7 @@ requires an installation of [Node.js](https://nodejs.org/en/).
   root directory. [`http-server`](https://www.npmjs.com/package/http-server) is
   the recommended package.
 
-### Example
+### How to run from cloned source
 
 ```
 npm install
