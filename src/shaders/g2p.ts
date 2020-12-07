@@ -128,6 +128,8 @@ void main() {
   // // if APIC: ignore apic for now -- below is APIC code
   // particles1.data[index].v.xyz = vP_PIC.xyz;
   // particles2.data[index].C = CMat;
+
+  // Remember to use PIC for position update
   particles1.data[index].pos.xyz += params.dt * vP_PIC.xyz;
 }`
 };

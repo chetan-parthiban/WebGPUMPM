@@ -295,10 +295,10 @@ void main() {
     mat3 FPNew = FePNew * particles2.data[index].Fp;
     // correct FePNew
     mat3 u, sigma, v;
-    SVD_mats F_SVD = svd(particles2.data[index].F);
-    u = F_SVD.U;
-    sigma = F_SVD.Sigma;
-    v = F_SVD.V;
+    SVD_mats FePNew_SVD = svd(FePNew);
+    u = FePNew_SVD.U;
+    sigma = FePNew_SVD.Sigma;
+    v = FePNew_SVD.V;
     // Clamping the singular values of sigma
     sigma[0].x = max(1.0 - params.thetaC, min(sigma[0].x, 1.0 + params.thetaS));
     sigma[1].y = max(1.0 - params.thetaC, min(sigma[1].y, 1.0 + params.thetaS));

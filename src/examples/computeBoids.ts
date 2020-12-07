@@ -10,6 +10,10 @@ import { setBoundaryVelocitiesShader } from '../shaders/setBoundaryVelocities';
 import { updateGridVelocityShader } from '../shaders/updateGridVelocity';
 import { g2pShader } from '../shaders/g2p';
 import { evolveFandJShader } from '../shaders/evolveFandJ';
+import { p2g_PShader } from '../shaders/p2g_P';
+import { addMaterialForce_PShader } from '../shaders/addMaterialForce_P';
+import { testShader } from '../shaders/test';
+
 import { createRenderingPipeline, createComputePipeline } from '../utilities/shaderCreation';
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
 import { createBindGroup } from '../utilities/bindGroupCreation';
@@ -47,6 +51,9 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const p2gPipeline = createComputePipeline(p2gShader.p2g(numP, numG), device, glslang);
   const g2pPipeline = createComputePipeline(g2pShader.g2p(numP, numG), device, glslang);
   const evolveFandJPipeline = createComputePipeline(evolveFandJShader.evolveFandJ(numP, numG), device, glslang);
+  const p2g_PPipeline = createComputePipeline(p2g_PShader.p2g_P(numP, numG), device, glslang);
+  const testPipeline = createComputePipeline(testShader.test(numP, numG), device, glslang); // For testing purposes
+  const addMaterialForce_PPipeline = createComputePipeline(addMaterialForce_PShader.addMaterialForce_P(numP, numG), device, glslang);
 
   // create GPU Buffers
   const simParamBuffer = createBuffer(simParamData, GPUBufferUsage.UNIFORM, device);  
@@ -72,17 +79,35 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     
     // record and execute command sequence on the gpu
     const commandEncoder = device.createCommandEncoder();
-    // // runComputePipeline(commandEncoder, computePipeline, bindGroup, numP, 1, 1);
-    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
+    // // Naive Version
+    // for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
+    //   runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
+    //   runComputePipeline(commandEncoder, p2gPipeline, bindGroup, nxG, nyG, nzG);
+    //   runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
+    //   runComputePipeline(commandEncoder, addMaterialForcePipeline, bindGroup, nxG, nyG, nzG);
+    //   runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
+    //   runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
+    //   runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
+    //   runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
+    // }
+
+    // Atomics Version
+    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 20.0); i++) {
       runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, p2gPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
       runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, addMaterialForcePipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1);
       runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
       runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
       runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
       runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
     }
+
+    // Test
+    // runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
+    // runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, nxG, nyG, nzG);
+    // runComputePipeline(commandEncoder, testPipeline, bindGroup, nxG, nyG, nzG);
+
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);
 
