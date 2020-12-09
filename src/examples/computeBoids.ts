@@ -18,10 +18,10 @@ import { createRenderingPipeline, createComputePipeline } from '../utilities/sha
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
 import { createBindGroup } from '../utilities/bindGroupCreation';
 import { getCameraTransformFunc } from '../utilities/cameraUtils'
-import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt } from '../utilities/simulationParameters';
+import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt, doBenchmark, queryLength} from '../utilities/simulationParameters';
 import * as boilerplate from '../utilities/webgpuBoilerplate';
 import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
-import { createQueryBuffer, createTimestampQuerySet } from '../utilities/benchmarking';
+import { createQueryBuffer, createReadBuffer, createTimestampQuerySet, resolveQuery } from '../utilities/benchmarking';
 
 export const title = 'Material Point Method';
 export const description = 'A hybrid Eulerian/Lagrangian method for the simulation \
@@ -32,7 +32,7 @@ export const description = 'A hybrid Eulerian/Lagrangian method for the simulati
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // setup webgpu device, context, and glsl compiler
   const adapter = await navigator.gpu.requestAdapter();
-  const device = await adapter.requestDevice();
+  const device = await adapter.requestDevice({extensions: ["timestamp-query"]});
   const glslang = await glslangModule();
   const context = canvas.getContext('gpupresent');
    
@@ -62,7 +62,10 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const p2Buffer = createBuffer(p2Data, GPUBufferUsage.STORAGE, device); 
   const gBuffer = createBuffer(gData, GPUBufferUsage.STORAGE, device); 
   const uniformBuffer = createEmptyUniformBuffer(4 * 16, device); // 4x4 matrix projection matrix for render pipeline
-  const querySetBuffer = createQueryBuffer(9, device);
+  const querySetBuffer : GPUBuffer = createQueryBuffer(8*queryLength, device);
+  const queryReadBuffer = createReadBuffer(8*queryLength, device);
+  const query = createTimestampQuerySet(device, queryLength);
+  let benchmarkArr = new BigInt64Array(queryLength/2);
 
   // create GPU Bind Groups
   const uniformBindGroup = createBindGroup([uniformBuffer], renderPipeline, device);
@@ -70,10 +73,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
   // setup Camera Transformations
   let getTransformationMatrix = getCameraTransformFunc(canvas);
-
   let t = 0;
-  let query = createTimestampQuerySet(device, 9);
-  return function frame(timestamp, view) {
+  return async function frame(timestamp, view) {
 
     // prepare for the render pass
     const transformationMatrix = getTransformationMatrix(view); // gets a transformation matrix (modelViewProjection)
@@ -96,33 +97,31 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
     // Atomics Version
     // for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
-    // commandEncoder.writeTimestamp(query, 0);
-    runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
-    // commandEncoder.writeTimestamp(query, 1);
-    runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
-    // commandEncoder.writeTimestamp(query, 2);
-    runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
-    // commandEncoder.writeTimestamp(query, 3);
-    runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1);
-    // commandEncoder.writeTimestamp(query, 4);
-    runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
-    // commandEncoder.writeTimestamp(query, 5);
-    runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
-    // commandEncoder.writeTimestamp(query, 6);
-    runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
-    // commandEncoder.writeTimestamp(query, 7);
-    runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
-    // commandEncoder.writeTimestamp(query, 8);
+    runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 0, query);
+    runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 2, query);
+    runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 4, query);
+    runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 6, query);
+    runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 8, query);
+    runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 10, query);
+    runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1, doBenchmark, 12, query);
+    runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1, doBenchmark, 14, query);
     // }
-    
-    // Test
-    // runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
-    // runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, nxG, nyG, nzG);
-    // runComputePipeline(commandEncoder, testPipeline, bindGroup, nxG, nyG, nzG);
-
+    if (doBenchmark) {
+      resolveQuery(commandEncoder, query, querySetBuffer, queryReadBuffer, queryLength);
+    }
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);
+
+    if (doBenchmark) {
+      await queryReadBuffer.mapAsync(GPUMapMode.READ);
+      let timesArr = new BigUint64Array(queryReadBuffer.getMappedRange());
+      for (let i = 0; i < queryLength/2; i++) {
+        let dt = timesArr[2*i + 1] - timesArr[2*i];
+        benchmarkArr[i] += dt;
+      }
+      console.log(benchmarkArr);
+      queryReadBuffer.unmap();
+    }
     ++t;
   }
 }
-

@@ -8,13 +8,19 @@ export function writeBuffer(device, buffer, data) {
       );
 }
 
-export function runComputePipeline(encoder, pipeline, bindgroup, tx, ty, tz) {
+export function runComputePipeline(encoder : GPUCommandEncoder, pipeline, bindgroup, tx, ty, tz, doBenchmark : Boolean = false, benchmarkIdx : number= 0, benchmarkQuery : GPUQuerySet = undefined) {
+    if (doBenchmark) {
+        encoder.writeTimestamp(benchmarkQuery, benchmarkIdx);
+    }
     {
         const passEncoder = encoder.beginComputePass();
         passEncoder.setPipeline(pipeline);
         passEncoder.setBindGroup(0, bindgroup);
         passEncoder.dispatch(tx, ty, tz);
         passEncoder.endPass();
+    }
+    if (doBenchmark) {
+        encoder.writeTimestamp(benchmarkQuery, benchmarkIdx + 1);
     }
 }
 

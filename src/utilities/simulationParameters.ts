@@ -1,5 +1,7 @@
 import { Vector3 } from 'three';
 
+export const doBenchmark = true;
+export const queryLength = 16;
 // Simulation Parameters
 export const dt = 0.001; // Timestep
 export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
