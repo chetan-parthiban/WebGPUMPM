@@ -33,7 +33,7 @@ export const rhoFluid = 997; // Density of the points' material for fluid
 
 export const numPJello = 0;//16 * 16 * 16 * 8;
 export const numPSnow = 0;//16 * 16 * 16 * 8;
-export const numPFluid = 50000;//128000;  // 128000
+export const numPFluid = 128000;  // 128000
 export const numP = numPJello + numPSnow + numPFluid; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
