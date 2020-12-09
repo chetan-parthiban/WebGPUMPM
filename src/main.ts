@@ -127,11 +127,11 @@ async function loadExample(hashName: string) {
     }; 
 
 
-    function doFrame(timestamp) {
+    async function doFrame(timestamp) {
         if (currentCanvas !== canvas) return;
 
         window.addEventListener('keydown', updateListener, false);
-        frame(timestamp, view);
+        await frame(timestamp, view);
 
         requestAnimationFrame(doFrame);
     }
