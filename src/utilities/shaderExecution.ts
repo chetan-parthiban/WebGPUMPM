@@ -24,13 +24,16 @@ export function runComputePipeline(encoder : GPUCommandEncoder, pipeline, bindgr
     }
 }
 
-export function runRenderPipeline(encoder, descriptor, pipeline, uniforms, vertices, numInstances) {
+export function runRenderPipeline(encoder, descriptor, pipeline, uniforms, vertices, numInstances, useInstance = false, instanceVertices = 1, instanceBuffer = undefined) {
     {
         const passEncoder = encoder.beginRenderPass(descriptor);
         passEncoder.setPipeline(pipeline);
         passEncoder.setBindGroup(0, uniforms);
         passEncoder.setVertexBuffer(0, vertices);
-        passEncoder.draw(1, numInstances, 0, 0);
+        if (useInstance) {
+            passEncoder.setVertexBuffer(1, instanceBuffer);
+        }
+        passEncoder.draw(instanceVertices, numInstances, 0, 0);
         passEncoder.endPass();
     }
 }

@@ -1,3 +1,4 @@
+import * as cubeParams from "../cube";
 
 export function createComputePipeline(code, device, glslang) {
     return device.createComputePipeline({
@@ -31,7 +32,7 @@ export function createRenderingPipeline(shaders, device, glslang) {
       entryPoint: "main",
     },
 
-    primitiveTopology: "point-list",
+    primitiveTopology: "triangle-list",
 
     depthStencilState: {
       depthWriteEnabled: true,
@@ -60,6 +61,22 @@ export function createRenderingPipeline(shaders, device, glslang) {
             },
           ],
         },
+        {
+          arrayStride: cubeParams.cubeVertexSize,
+          stepMode: "vertex",
+          attributes: [
+            {
+              shaderLocation: 2,
+              offset: cubeParams.cubePositionOffset,
+              format: "float4",
+            },
+            {
+              shaderLocation: 3,
+              offset: cubeParams.cubeNormalOffset,
+              format: "float4",
+            }
+          ]
+        }
       ],
     },
 

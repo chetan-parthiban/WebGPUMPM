@@ -22,6 +22,7 @@ import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt, doB
 import * as boilerplate from '../utilities/webgpuBoilerplate';
 import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
 import { createQueryBuffer, createReadBuffer, createTimestampQuerySet, resolveQuery } from '../utilities/benchmarking';
+import * as cubeParams from '../cube';
 
 export const title = 'Material Point Method';
 export const description = 'A hybrid Eulerian/Lagrangian method for the simulation \
@@ -66,7 +67,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const queryReadBuffer = createReadBuffer(8*queryLength, device);
   const query = createTimestampQuerySet(device, queryLength);
   let benchmarkArr = new BigInt64Array(queryLength/2);
-
+  const cubeBuffer = createBuffer(cubeParams.cubeVertexArray, GPUBufferUsage.VERTEX, device);
   // create GPU Bind Groups
   const uniformBindGroup = createBindGroup([uniformBuffer], renderPipeline, device);
   const bindGroup = createBindGroup([simParamBuffer, p1Buffer, p2Buffer, gBuffer], computePipeline, device)
@@ -109,7 +110,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     if (doBenchmark) {
       resolveQuery(commandEncoder, query, querySetBuffer, queryReadBuffer, queryLength);
     }
-    runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
+    runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer);
     device.defaultQueue.submit([commandEncoder.finish()]);
 
     if (doBenchmark) {
