@@ -66,7 +66,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const querySetBuffer : GPUBuffer = createQueryBuffer(8*queryLength, device);
   const queryReadBuffer = createReadBuffer(8*queryLength, device);
   const query = createTimestampQuerySet(device, queryLength);
-  let benchmarkArr = new BigInt64Array(queryLength/2);
+  let benchmarkArr = new Float32Array(queryLength/2);
   const cubeBuffer = createBuffer(cubeParams.cubeVertexArray, GPUBufferUsage.VERTEX, device);
   // create GPU Bind Groups
   const uniformBindGroup = createBindGroup([uniformBuffer], renderPipeline, device);
@@ -117,8 +117,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       await queryReadBuffer.mapAsync(GPUMapMode.READ);
       let timesArr = new BigUint64Array(queryReadBuffer.getMappedRange());
       for (let i = 0; i < queryLength/2; i++) {
-        let dt = timesArr[2*i + 1] - timesArr[2*i];
-        benchmarkArr[i] += dt;
+        let dt = Number(timesArr[2*i + 1] - timesArr[2*i]) / 1000;
+        benchmarkArr[i] = Math.round((((benchmarkArr[i]*t) +  dt)/(t+1))*100)/100;
       }
       console.log(benchmarkArr);
       queryReadBuffer.unmap();
