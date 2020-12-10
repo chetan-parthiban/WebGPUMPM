@@ -31,9 +31,9 @@ export const rhoJello = 1000.0;  // Density of the points' material for jello
 export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
 
-export const numPJello = 0;//16 * 16 * 16 * 8;
-export const numPSnow = 0;//16 * 16 * 16 * 8;
-export const numPFluid = 128000;  // 128000
+export const numPJello = 16 * 16 * 16 * 8;
+export const numPSnow = 16 * 16 * 16 * 8;
+export const numPFluid = 128000;  
 export const numP = numPJello + numPSnow + numPFluid; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
