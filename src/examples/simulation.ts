@@ -96,8 +96,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     //   runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
     // }
 
-    // Atomics Version
-    // for (let i = 0; i < Math.floor(1.0 / 24.0 / dt); i++) {
+    // Atomics Version 
+    // for (let i = 0; i < 5; i++) {
     runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 0, query);
     runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 2, query);
     runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 4, query);
@@ -110,7 +110,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     if (doBenchmark) {
       resolveQuery(commandEncoder, query, querySetBuffer, queryReadBuffer, queryLength);
     }
-    runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer);
+    runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer, doBenchmark, 16, query);
     device.defaultQueue.submit([commandEncoder.finish()]);
 
     if (doBenchmark) {

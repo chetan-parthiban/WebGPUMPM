@@ -13,7 +13,7 @@ export const renderingShaders = {
   layout(location = 0) out vec4 fs_pos;
   layout(location = 1) out vec4 fs_vel;
   void main() {
-    gl_Position = uniforms.modelViewProjectionMatrix * vec4(a_particlePos.xyz+(a_cubePos.xyz*0.005), 1.0);
+    gl_Position = uniforms.modelViewProjectionMatrix * vec4(a_particlePos.xyz+(a_cubePos.xyz*0.05), 1.0);
     fs_pos = a_particlePos;
     fs_vel = a_particleVel;
   }`,

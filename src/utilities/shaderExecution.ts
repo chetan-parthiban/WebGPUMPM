@@ -24,7 +24,10 @@ export function runComputePipeline(encoder : GPUCommandEncoder, pipeline, bindgr
     }
 }
 
-export function runRenderPipeline(encoder, descriptor, pipeline, uniforms, vertices, numInstances, useInstance = false, instanceVertices = 1, instanceBuffer = undefined) {
+export function runRenderPipeline(encoder, descriptor, pipeline, uniforms, vertices, numInstances, useInstance = false, instanceVertices = 1, instanceBuffer = undefined, doBenchmark : Boolean = false, benchmarkIdx : number= 0, benchmarkQuery : GPUQuerySet = undefined) {
+    if (doBenchmark) {
+        encoder.writeTimestamp(benchmarkQuery, benchmarkIdx);
+    }
     {
         const passEncoder = encoder.beginRenderPass(descriptor);
         passEncoder.setPipeline(pipeline);
@@ -35,5 +38,8 @@ export function runRenderPipeline(encoder, descriptor, pipeline, uniforms, verti
         }
         passEncoder.draw(instanceVertices, numInstances, 0, 0);
         passEncoder.endPass();
+    }
+    if (doBenchmark) {
+        encoder.writeTimestamp(benchmarkQuery, benchmarkIdx + 1);
     }
 }

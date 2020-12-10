@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 
-export const doBenchmark = false;
-export const queryLength = 16;
+export const doBenchmark = true;
+export const queryLength = 18;
 // Simulation Parameters
 export const dt = 0.001; // Timestep
 export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
@@ -16,7 +16,7 @@ export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number o
 export const numG = nxG * nyG * nzG; // Total number of grid points
 
 // Particle Attributes
-export const E = 10000.0;  // Young's Modulus (Hardness)
+export const E = 50000.0;  // Young's Modulus (Hardness)
 export const E0 = 14000; // Initial Young's Modulus (for snow)
 export const nu = 0.3; // Poisson's Ratio (Incompressibility)
 export const nuSnow = 0.2; // Poisson's Ratio (for snow)
@@ -32,8 +32,8 @@ export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
 
 export const numPJello = 16 * 16 * 16 * 8;
-export const numPSnow = 16 * 16 * 16 * 8;
-export const numPFluid = 128000;  
+export const numPSnow = 0;//16 * 16 * 16 * 8;
+export const numPFluid = 64000;//128000;  
 export const numP = numPJello + numPSnow + numPFluid; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
