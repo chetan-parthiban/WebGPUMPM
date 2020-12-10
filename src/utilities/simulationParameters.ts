@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 
-export const doBenchmark = true;
+export const doBenchmark = false;
 export const queryLength = 18;
 // Simulation Parameters
 export const dt = 0.001; // Timestep
