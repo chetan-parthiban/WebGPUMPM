@@ -8,10 +8,12 @@ export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
 export const minCorner = new Vector3(-1.0, -1.0, -1.0); // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
 export const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
 export const h = 0.04; // Cell width of the grid
-export const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid points in the x-direction
-export const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid points in the y-direction
-export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid points in the z-direction
-export const numG = nxG * nyG * nzG; // Total number of grid points
+export const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid nodes in the x-direction
+export const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid nodes in the y-direction
+export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid nodes in the z-direction
+export const numG = nxG * nyG * nzG; // Total number of grid nodes
+export const numGPadded = getNumGPadded(numG); // Total number of grid nodes but padded with 0s (For stream compaction purposes)
+export const sweepIters = ilog2ceil(numGPadded) - 1;  // Number of iterations to iterate over in up sweep and down sweep in stream compaction
 
 // Particle Attributes
 export const E = 10000.0;  // Young's Modulus (Hardness)
@@ -95,6 +97,12 @@ export const simParamData = new Float32Array([
   // Padding to match the 4 floats alignment (1 float)
   export const gData = new Float32Array(numG * 16);
 
+  // Criteria Buffer (Only Has Value 0 Or 1) (1 float)
+  // Scan Buffer (Result Of Exclusive Scanning The Criteria Buffer) (1 float)
+  // Stream Compaction Result Buffer (Final Result Of Stream Compaction After Scattering) (1 float)
+  // Iteration Depth Buffer (Storing The Current Iteration Depth In Up-Sweep And Down-Sweep) (1 float)
+  export const gSCData = new Float32Array(numGPadded * 4);
+
 
   let matIdentity : number[] = [1, 0, 0, 0,/*Col 1*/ 0, 1, 0, 0,/*Col 2*/ 0, 0, 1, 0/*Col 3*/];
   let volumeP = h * h * h / 8.0;
@@ -160,6 +168,32 @@ export const simParamData = new Float32Array([
     p2Data[52 * i + 51] = 0;  // Padding to match the 4 floats alignment (1 float)
   }
 
+  function ilog2(x) {
+    let lg = 0;
+    while (x = x >> 1) {
+        ++lg;
+    }
+    return lg;
+  }
+
+  function ilog2ceil(x) {
+    return x == 1 ? 0 : ilog2(x - 1) + 1;
+  }
+
+  // Testing
+  // console.log(ilog2ceil(16777216 + 1));
+  // console.log(ilog2ceil(numG));
+
+  function getNumGPadded(n) {
+    let paddedSize = 1 << ilog2ceil(n);
+    let nPadded = n;
+    if (paddedSize > n) {
+      nPadded = paddedSize;
+    }
+    return nPadded;
+  }
+  
+
   for (let i = 0; i < numG; i++) {
     // Fill in gData
     gData[16 * i + 0] = 0;  // New Velocity Stored On The Grid Node (X Component) (1 float)
@@ -179,6 +213,14 @@ export const simParamData = new Float32Array([
     gData[16 * i + 14] = 0;  // PADDING (1 float)
     gData[16 * i + 15] = 0;  // PADDING (1 float)
   }
+
+  for (let i = 0; i < numGPadded; i++) {
+    // Fill in gSCData
+    gSCData[4 * i + 0] = 0; // Criteria (Only Has Value 0 Or 1) (1 float)
+    gSCData[4 * i + 1] = 0; // Scan Result (Result Of Exclusive Scanning The Criteria Buffer) (1 float)
+    gSCData[4 * i + 2] = 0; // Stream Compaction Result (Final Result Of Stream Compaction After Scattering) (1 float)
+    gSCData[4 * i + 3] = 0; // Iteration Depth (Storing The Current Iteration Depth In Up-Sweep And Down-Sweep) (1 float)
+}
 
   console.log("Number Of Jello Particles: " + counterJello.toString());
   console.log("Number Of Snow Particles: " + counterSnow.toString());

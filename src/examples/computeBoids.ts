@@ -12,13 +12,21 @@ import { g2pShader } from '../shaders/g2p';
 import { evolveFandJShader } from '../shaders/evolveFandJ';
 import { p2g_PShader } from '../shaders/p2g_P';
 import { addMaterialForce_PShader } from '../shaders/addMaterialForce_P';
+
+import { getCriteriaShader } from '../shaders/getCriteria';
+import { upSweepShader } from '../shaders/upSweep';
+import { setRootToZeroShader } from '../shaders/setRootToZero';
+import { downSweepShader } from '../shaders/downSweep';
+import { scatterShader } from '../shaders/scatter';
+import { clearSCShader } from '../shaders/clearSC';
+
 import { testShader } from '../shaders/test';
 
 import { createRenderingPipeline, createComputePipeline } from '../utilities/shaderCreation';
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
 import { createBindGroup } from '../utilities/bindGroupCreation';
 import { getCameraTransformFunc } from '../utilities/cameraUtils'
-import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt } from '../utilities/simulationParameters';
+import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt, gSCData, numGPadded, sweepIters } from '../utilities/simulationParameters';
 import * as boilerplate from '../utilities/webgpuBoilerplate';
 import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
 
@@ -42,29 +50,39 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
   // create and compile pipelines for rendering and computation
   const renderPipeline = createRenderingPipeline(renderingShaders, device, glslang);
-  const computePipeline = createComputePipeline(exampleShaders.compute(numP, numG), device, glslang);
-  const addMaterialForcePipeline = createComputePipeline(addMaterialForceShader.addMaterialForce(numP, numG), device, glslang);
-  const addGravityPipeline = createComputePipeline(addGravityShader.addGravity(numP, numG), device, glslang);
-  const clearGridDataPipeline = createComputePipeline(clearGridDataShader.clearGridData(numP, numG), device, glslang);
-  const setBoundaryVelocitiesPipeline = createComputePipeline(setBoundaryVelocitiesShader.setBoundaryVelocities(numP, numG), device, glslang);
-  const updateGridVelocityPipeline = createComputePipeline(updateGridVelocityShader.updateGridVelocity(numP, numG), device, glslang);
-  const p2gPipeline = createComputePipeline(p2gShader.p2g(numP, numG), device, glslang);
-  const g2pPipeline = createComputePipeline(g2pShader.g2p(numP, numG), device, glslang);
-  const evolveFandJPipeline = createComputePipeline(evolveFandJShader.evolveFandJ(numP, numG), device, glslang);
-  const p2g_PPipeline = createComputePipeline(p2g_PShader.p2g_P(numP, numG), device, glslang);
-  const testPipeline = createComputePipeline(testShader.test(numP, numG), device, glslang); // For testing purposes
-  const addMaterialForce_PPipeline = createComputePipeline(addMaterialForce_PShader.addMaterialForce_P(numP, numG), device, glslang);
+  const computePipeline = createComputePipeline(exampleShaders.compute(numP, numG, numGPadded), device, glslang);
+  const addMaterialForcePipeline = createComputePipeline(addMaterialForceShader.addMaterialForce(numP, numG, numGPadded), device, glslang);
+  const addGravityPipeline = createComputePipeline(addGravityShader.addGravity(numP, numG, numGPadded), device, glslang);
+  const clearGridDataPipeline = createComputePipeline(clearGridDataShader.clearGridData(numP, numG, numGPadded), device, glslang);
+  const setBoundaryVelocitiesPipeline = createComputePipeline(setBoundaryVelocitiesShader.setBoundaryVelocities(numP, numG, numGPadded), device, glslang);
+  const updateGridVelocityPipeline = createComputePipeline(updateGridVelocityShader.updateGridVelocity(numP, numG, numGPadded), device, glslang);
+  const p2gPipeline = createComputePipeline(p2gShader.p2g(numP, numG, numGPadded), device, glslang);
+  const g2pPipeline = createComputePipeline(g2pShader.g2p(numP, numG, numGPadded), device, glslang);
+  const evolveFandJPipeline = createComputePipeline(evolveFandJShader.evolveFandJ(numP, numG, numGPadded), device, glslang);
+  const p2g_PPipeline = createComputePipeline(p2g_PShader.p2g_P(numP, numG, numGPadded), device, glslang);
+  const addMaterialForce_PPipeline = createComputePipeline(addMaterialForce_PShader.addMaterialForce_P(numP, numG, numGPadded), device, glslang);
 
+  const getCriteriaPipeline = createComputePipeline(getCriteriaShader.getCriteria(numP, numG, numGPadded), device, glslang);
+  const upSweepPipeline = createComputePipeline(upSweepShader.upSweep(numP, numG, numGPadded), device, glslang);
+  const setRootToZeroPipeline = createComputePipeline(setRootToZeroShader.setRootToZero(numP, numG, numGPadded), device, glslang);
+  const downSweepPipeline = createComputePipeline(downSweepShader.downSweep(numP, numG, numGPadded), device, glslang);
+  const scatterPipeline = createComputePipeline(scatterShader.scatter(numP, numG, numGPadded), device, glslang);
+  const clearSCPipeline = createComputePipeline(clearSCShader.clearSC(numP, numG, numGPadded), device, glslang);
+
+  // For Testing Purposes
+  const testPipeline = createComputePipeline(testShader.test(numP, numG, numGPadded), device, glslang); // For testing purposes
+  
   // create GPU Buffers
   const simParamBuffer = createBuffer(simParamData, GPUBufferUsage.UNIFORM, device);  
   const p1Buffer = createBuffer(p1Data, GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE, device);  
   const p2Buffer = createBuffer(p2Data, GPUBufferUsage.STORAGE, device); 
   const gBuffer = createBuffer(gData, GPUBufferUsage.STORAGE, device); 
   const uniformBuffer = createEmptyUniformBuffer(4 * 16, device); // 4x4 matrix projection matrix for render pipeline
+  const gSCBuffer = createBuffer(gSCData, GPUBufferUsage.STORAGE, device); 
 
   // create GPU Bind Groups
   const uniformBindGroup = createBindGroup([uniformBuffer], renderPipeline, device);
-  const bindGroup = createBindGroup([simParamBuffer, p1Buffer, p2Buffer, gBuffer], computePipeline, device)
+  const bindGroup = createBindGroup([simParamBuffer, p1Buffer, p2Buffer, gBuffer, gSCBuffer], computePipeline, device)
 
   // setup Camera Transformations
   let getTransformationMatrix = getCameraTransformFunc(canvas);
@@ -95,9 +113,27 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 20.0); i++) {
       runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
       runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG);
+      /* ----------------------- Stream Compaction Starts -------------------------------------- */
+      // Clear Stream Compaction Buffer Data
+      runComputePipeline(commandEncoder, clearSCPipeline, bindGroup, numGPadded, 1, 1);
+      // Get Criteria (1 if corresponding grid node has non-zero mass; 0 otherwise)
+      runComputePipeline(commandEncoder, getCriteriaPipeline, bindGroup, numG, 1, 1);
+      // Up-Sweep/Reduce (Exclusive Scan)
+      for (let i = 0; i <= sweepIters; i++) {
+        runComputePipeline(commandEncoder, upSweepPipeline, bindGroup, numGPadded, 1, 1);
+      }
+      // Set Root To Zero (Exclusive Scan)
+      runComputePipeline(commandEncoder, setRootToZeroPipeline, bindGroup, numGPadded, 1, 1);
+      // Down-Sweep (Exclusive Scan)
+      for (let i = 0; i <= sweepIters; i++) {
+        runComputePipeline(commandEncoder, downSweepPipeline, bindGroup, numGPadded, 1, 1);
+      }
+      // Scatter
+      runComputePipeline(commandEncoder, scatterPipeline, bindGroup, numGPadded, 1, 1);
+      /* ----------------------- Stream Compaction Ends ---------------------------------------- */
+      runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, numG, 1, 1);
       runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG);
+      runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, numG, 1, 1);
       runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
       runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
       runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
@@ -106,7 +142,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     // Test
     // runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
     // runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, nxG, nyG, nzG);
-    // runComputePipeline(commandEncoder, testPipeline, bindGroup, nxG, nyG, nzG);
+    // runComputePipeline(commandEncoder, testPipeline, bindGroup, numP, 1, 1);
 
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup, p1Buffer, numP);
     device.defaultQueue.submit([commandEncoder.finish()]);

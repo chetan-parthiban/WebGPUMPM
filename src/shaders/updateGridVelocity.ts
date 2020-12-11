@@ -4,7 +4,7 @@ export const updateGridVelocityShader = {
 /* ---------------------------------------------------------------------------- */
 /* ----------------------------- updateGridVelocity --------------------------- */
 /* ---------------------------------------------------------------------------- */
-  updateGridVelocity: (numPArg: number, numGArg: number) => `#version 450
+  updateGridVelocity: (numPArg: number, numGArg: number, numGPaddedArg: number) => `#version 450
   layout(std140, set = 0, binding = 0) uniform SimParams {
     float dt; // Timestep
     float gravityX;  // Gravity (x-component)
@@ -62,6 +62,12 @@ export const updateGridVelocityShader = {
     float PADDING_2;  // (IGNORE)
     float PADDING_3;  // (IGNORE)
   };
+  struct StreamCompStruct {
+    float criteria; // Criteria (Only Has Value 0 Or 1)
+    float scan; // Scan Result (Result Of Exclusive Scanning The Criteria Buffer)
+    float compact; // Stream Compaction Result (Final Result Of Stream Compaction After Scattering)
+    float d; // Iteration Depth (Storing The Current Iteration Depth In Up-Sweep And Down-Sweep)
+  };
   layout(std430, set = 0, binding = 1) buffer PARTICLES1 {
     ParticleStruct1 data[${numPArg}];
   } particles1;
@@ -71,26 +77,32 @@ export const updateGridVelocityShader = {
   layout(std430, set = 0, binding = 3) buffer GRIDNODES {
     GridNodeStruct data[${numGArg}];
   } gridNodes;
+  layout(std430, set = 0, binding = 4) buffer STREAMCOMPACTION {
+    StreamCompStruct data[${numGPaddedArg}];
+  } SC;
+  
   int coordinateToId(ivec3 c) {
     return c[0] + int(params.nxG) * c[1] + int(params.nxG) * int(params.nyG) * c[2];
   }
   void main() {
-    uint indexI = gl_GlobalInvocationID.x;
-    uint indexJ = gl_GlobalInvocationID.y;
-    uint indexK = gl_GlobalInvocationID.z;
-    if (indexI >= params.nxG || indexJ >= params.nyG || indexK >= params.nzG) { return; }
+    // uint indexI = gl_GlobalInvocationID.x;
+    // uint indexJ = gl_GlobalInvocationID.y;
+    // uint indexK = gl_GlobalInvocationID.z;
+    // if (indexI >= params.nxG || indexJ >= params.nyG || indexK >= params.nzG) { return; }
     
-    int baseNodeI = int(indexI);
-    int baseNodeJ = int(indexJ);
-    int baseNodeK = int(indexK);
-    int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
+    // int baseNodeI = int(indexI);
+    // int baseNodeJ = int(indexJ);
+    // int baseNodeK = int(indexK);
+    // int nodeID = coordinateToId(ivec3(baseNodeI, baseNodeJ, baseNodeK));
+    uint index = gl_GlobalInvocationID.x;
+    int numActiveNodes = int(SC.data[${numGPaddedArg} - 1].criteria) + int(SC.data[${numGPaddedArg} - 1].scan);
+    if (index >= numActiveNodes) { return; }
+
+    int nodeID = int(SC.data[index].compact);
+
     // Updating Velocity Stored On Grid Nodes
-    if (gridNodes.data[nodeID].m != 0) {
-      gridNodes.data[nodeID].vN = gridNodes.data[nodeID].v + params.dt * gridNodes.data[nodeID].force / gridNodes.data[nodeID].m;
-    }
-    // Test Speed
-    // if (nodeID < ${numPArg}) {
-    //   particles1.data[nodeID].pos += vec4(vec3(0, 0.01, 0), 0);
+    // if (gridNodes.data[nodeID].m != 0) {
+    gridNodes.data[nodeID].vN = gridNodes.data[nodeID].v + params.dt * gridNodes.data[nodeID].force / gridNodes.data[nodeID].m;
     // }
   }`,
 };
