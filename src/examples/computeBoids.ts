@@ -38,7 +38,7 @@ export const description = 'A hybrid Eulerian/Lagrangian method for the simulati
 
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // setup webgpu device, context, and glsl compiler
-  const adapter = await navigator.gpu.requestAdapter();
+  const adapter = await navigator.gpu.requestAdapter({powerPreference : "high-performance"});
   const device = await adapter.requestDevice();
   const glslang = await glslangModule();
   const context = canvas.getContext('gpupresent');
