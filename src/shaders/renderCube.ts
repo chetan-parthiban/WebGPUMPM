@@ -28,7 +28,7 @@ export const renderCubeShaders = {
   layout(location = 0) out vec4 outColor;
   
   void main() {
-    vec4 diffuseColor = vec4(0.5, 0.5, 0.7, 1);
+    vec4 diffuseColor = vec4(0.7, 0.7, 0.7, 1);
   
     float diffuseTerm = dot(fragNorm, normalize(fragLightVec));
     diffuseTerm = clamp(diffuseTerm, 0, 1);

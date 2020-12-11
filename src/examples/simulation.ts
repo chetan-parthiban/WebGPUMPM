@@ -21,7 +21,7 @@ import { createBindGroup } from '../utilities/bindGroupCreation';
 import { getCameraTransformFunc, getProjectionMatrix } from '../utilities/cameraUtils'
 import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt, doBenchmark, queryLength} from '../utilities/simulationParameters';
 import * as boilerplate from '../utilities/webgpuBoilerplate';
-import { runComputePipeline, runRenderPipeline, runRenderPipelineWithBox, writeBuffer } from '../utilities/shaderExecution';
+import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
 import { createQueryBuffer, createReadBuffer, createTimestampQuerySet, resolveQuery } from '../utilities/benchmarking';
 import * as cubeParams from '../cube';
 import * as cubeParams2 from '../cube2'
@@ -72,7 +72,7 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   const querySetBuffer : GPUBuffer = createQueryBuffer(8*queryLength, device);
   const queryReadBuffer = createReadBuffer(8*queryLength, device);
   const query = createTimestampQuerySet(device, queryLength);
-  let benchmarkArr = new BigInt64Array(queryLength/2);
+  let benchmarkArr = new Float32Array(queryLength/2);
   const cubeBuffer = createBuffer(cubeParams.cubeVertexArray, GPUBufferUsage.VERTEX, device);
   const cube2Buffer = createBuffer(cubeParams2.cubeVertexArray, GPUBufferUsage.VERTEX, device);
   // create GPU Bind Groups
@@ -117,8 +117,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     //   runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
     // }
 
-    // Atomics Version
-    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 10.0); i++) {
+    // Atomics Version 
+    for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 15.0); i++) {
     runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 0, query);
     runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 2, query);
     runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 4, query);
@@ -131,22 +131,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
     if (doBenchmark) {
       resolveQuery(commandEncoder, query, querySetBuffer, queryReadBuffer, queryLength);
     }
-    // runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, uniformBindGroup2, p1Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer);
-    // runRenderPipelineWithBox(commandEncoder, renderPassDescriptor, renderPipeline, renderCubePipeline, uniformBindGroup2, p1Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer);
-    
-    const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-        passEncoder.setPipeline(renderPipeline);
-        passEncoder.setBindGroup(0, uniformBindGroup2);
-        passEncoder.setVertexBuffer(0, p1Buffer);
-        passEncoder.setVertexBuffer(1, cubeBuffer);
-        passEncoder.draw(cubeParams.cubeVertexCount, numP, 0, 0);
-
-        passEncoder.setPipeline(renderCubePipeline);
-        passEncoder.setBindGroup(0, uniformBindGroupBox);
-        passEncoder.setVertexBuffer(0, cube2Buffer);
-        passEncoder.draw(36, 1, 0, 0);
-
-        passEncoder.endPass();
+    runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, renderCubePipeline, uniformBindGroup2, 
+                      uniformBindGroupBox, p1Buffer, cube2Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer, doBenchmark, 16, query);
 
     
 
@@ -157,8 +143,8 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
       await queryReadBuffer.mapAsync(GPUMapMode.READ);
       let timesArr = new BigUint64Array(queryReadBuffer.getMappedRange());
       for (let i = 0; i < queryLength/2; i++) {
-        let dt = timesArr[2*i + 1] - timesArr[2*i];
-        benchmarkArr[i] += dt;
+        let dt = Number(timesArr[2*i + 1] - timesArr[2*i]) / 1000;
+        benchmarkArr[i] = Math.round((((benchmarkArr[i]*t) +  dt)/(t+1))*100)/100;
       }
       console.log(benchmarkArr);
       queryReadBuffer.unmap();

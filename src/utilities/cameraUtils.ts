@@ -3,7 +3,7 @@ import { mat4 } from 'gl-matrix';
 export function getCameraTransformFunc(canvas) {
     const aspect = Math.abs(canvas.width / canvas.height);
     let projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 100.0); // setting up projection matrix
+    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 0.1, 100.0); // setting up projection matrix
     
     return function(view) {
             let modelViewProjectionMatrix = mat4.create();
@@ -15,6 +15,6 @@ export function getCameraTransformFunc(canvas) {
 export function getProjectionMatrix(canvas) {
     const aspect = Math.abs(canvas.width / canvas.height);
     let projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 100.0); // setting up projection matrix
+    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 0.1, 100.0); // setting up projection matrix
     return projectionMatrix;
 }

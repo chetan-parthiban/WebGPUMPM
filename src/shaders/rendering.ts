@@ -28,10 +28,13 @@ export const renderingShaders = {
   
     if (abs(a_particlePos.w - 2) <= 0.1) {
       // FLUID
-      scale = 0.005;
-    } else {
-      // JELLO OR SNOW
       scale = 0.01;
+    } else if (abs(a_particlePos.w - 1) <= 0.1){
+      // SNOW
+      scale = 0.02;
+    } else {
+      // JELLO
+      scale = 0.03;
     }
 
     gl_Position = proj * view * vec4(a_particlePos.xyz+(a_cubePos.xyz*scale), 1.0);
