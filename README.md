@@ -2,15 +2,10 @@
 
 MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accurate materials. In this project, we show off the compute capabilities of WebGPU to implement a MPM simulator allowing for the real-time simulation of 200k particles from a selection of three materials (Fluids, Jellos, and Snow). Here are 3 examples of our simulation running in real-time (jello + fluid, jello + snow, just jello):
 
-<img src="img/jello_fluid.gif" width="600">
-<div class="row">
-  <div class="column">
-    <img src="gifs/fluidsnow.gif" width="300">
-  </div>
-  <div class="column">
-    <img src="gifs/jello.gif" width="300">
-  </div>
-</div>
+### MidPoint Results
+Fluid + Jello           |       Jello + Snow           
+:-------------------------:|:-------------------------:
+<img src="img/jello_fluid.gif" width="330">| <img src="gifs/fluidsnow.gif" width="330"> |
 
 ## More WebGPU Samples to get started with WebGPU
 
