@@ -50,7 +50,7 @@
         max-width: 300px;
         height: 100vh;
         overflow: auto;
-        background: #fafafa;
+        background: slategray;
       }
 
       .example-link {
@@ -75,12 +75,12 @@
         flex: 1;
         height: 100vh;
         overflow: auto;
-        background: white;
+        background: gray;
         color: #ddd;
       }
 
       main.no-demo {
-        background: white;
+        background: gray;
       }
 
       #intro-text {
@@ -132,20 +132,19 @@
     <div id="panel">
       <div class="container">
         <h1 id="title"><a href="./#" class="nav-link"><%= htmlWebpackPlugin.options.title %></a></h1>
-        <a href="https://github.com/austinEng/webgpu-samples">Github</a>
+        <a href="https://github.com/chetan-parthiban/WebGPUMPM">Github</a>
         <hr />
-        <p>SPIR-V based samples</p>
         <% for (example of htmlWebpackPlugin.options.examples) { %>
           <a class="example-link nav-link" href="?wgsl=0#<%= example %>"><%= example %></a>
         <% } %>
-        <hr />
       </div>
     </div>
     <main class="container">
       <div id="intro-text">
         <h1></h1>
-        <p>The WebGPU Samples are a set of WGSL and SPIR-V compatible samples demonstrating the use of the <a href="//webgpu.dev">WebGPU API</a>.
-        Please see the current implementation status at <a href="//webgpu.io">webgpu.io</a>. SPIR-V compatible samples will be removed when WGSL is fully implemented.</p>
+        <p>This is an example implementation of the Material Point Method demonstrating the use of the <a href="//webgpu.dev">WebGPU API</a>.
+        Please see the current implementation status of WebGPU <a href="//webgpu.io">webgpu.io</a>. You can click the helloTriangle tab to confirm
+        that WebGPU is working appropriately on your device. The simulation tab will let you try out the simulator. </p>
 
         <p>These samples run in Chrome Canary behind the flag "--enable-unsafe-webgpu". If something isn't working, please file an
         issue <a href="https://github.com/austinEng/webgpu-samples/issues">here</a>.</p>

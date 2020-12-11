@@ -1,23 +1,57 @@
 export const renderingShaders = {
     vertex: `#version 450
   
+  // layout(set = 0, binding = 0) uniform Uniforms {
+  //   mat4 modelViewProjectionMatrix;
+  // } uniforms;
+
   layout(set = 0, binding = 0) uniform Uniforms {
-    mat4 modelViewProjectionMatrix;
+    mat4 matrices[3];
   } uniforms;
     
   layout(location = 0) in vec4 a_particlePos;
   layout(location = 1) in vec4 a_particleVel;
+  layout(location = 2) in vec4 a_cubePos;
+  layout(location = 3) in vec4 a_cubeNor;
+
   layout(location = 0) out vec4 fs_pos;
   layout(location = 1) out vec4 fs_vel;
+
+  layout(location = 2) out vec4 fragLightVec;
+  layout(location = 3) out vec4 fragNorm;
+
   void main() {
-    gl_Position = uniforms.modelViewProjectionMatrix * vec4(vec3(a_particlePos), 1.0);
+    mat4 view = uniforms.matrices[0];
+    mat4 invView = uniforms.matrices[1];
+    mat4 proj = uniforms.matrices[2];
+    float scale;
+  
+    if (abs(a_particlePos.w - 2) <= 0.1) {
+      // FLUID
+      scale = 0.01;
+    } else if (abs(a_particlePos.w - 1) <= 0.1){
+      // SNOW
+      scale = 0.02;
+    } else {
+      // JELLO
+      scale = 0.03;
+    }
+
+    gl_Position = proj * view * vec4(a_particlePos.xyz+(a_cubePos.xyz*scale), 1.0);
+    fragLightVec = invView * vec4(0,0,0,1) - vec4(a_particlePos.xyz+(a_cubePos.xyz*scale), 1.0);
     fs_pos = a_particlePos;
     fs_vel = a_particleVel;
+
+    fragNorm = a_cubeNor;
   }`,
   
     fragment: `#version 450
   layout(location = 0) in vec4 fs_pos;
   layout(location = 1) in vec4 fs_vel;
+
+  layout(location = 2) in vec4 fragLightVec;
+  layout(location = 3) in vec4 fragNorm;
+
   layout(location = 0) out vec4 fragColor;
 
   // [[-1.670, 0.790, 0.610] [-2.862, 0.700, 2.420] [0.318, 0.410, 0.050] [0.090, 0.533, 0.737]] blue to cyan
@@ -62,6 +96,14 @@ export const renderingShaders = {
       // SHOULD NOT GET TO THIS ELSE STATEMENT IF EVERYTHING WORKS RIGHT
       fragColor = vec4(1,1,1,1);
     }
+    
+
+    float diffuseTerm = dot(fragNorm, normalize(fragLightVec));
+    diffuseTerm = clamp(diffuseTerm, 0, 1);
+  
+    float ambientTerm = 0.2;
+    float lightIntensity = diffuseTerm + ambientTerm;
+    fragColor = clamp(fragColor * lightIntensity, 0, 1);
 
   }`,
 };

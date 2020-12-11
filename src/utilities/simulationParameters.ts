@@ -1,5 +1,7 @@
 import { Vector3 } from 'three';
 
+export const doBenchmark = false;
+export const queryLength = 18;
 // Simulation Parameters
 export const dt = 0.001; // Timestep
 export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
@@ -16,7 +18,7 @@ export const numGPadded = getNumGPadded(numG); // Total number of grid nodes but
 export const sweepIters = ilog2ceil(numGPadded) - 1;  // Number of iterations to iterate over in up sweep and down sweep in stream compaction
 
 // Particle Attributes
-export const E = 10000.0;  // Young's Modulus (Hardness)
+export const E = 15000.0;  // Young's Modulus (Hardness)
 export const E0 = 14000; // Initial Young's Modulus (for snow)
 export const nu = 0.3; // Poisson's Ratio (Incompressibility)
 export const nuSnow = 0.2; // Poisson's Ratio (for snow)
@@ -31,9 +33,9 @@ export const rhoJello = 1000.0;  // Density of the points' material for jello
 export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
 
-export const numPJello = 16 * 16 * 16 * 8;
-export const numPSnow = 16 * 16 * 16 * 8;
-export const numPFluid = 128000;  // 128000
+export const numPJello = 14* 14 * 14 * 8; // 16 * 16 * 16 * 8;
+export const numPSnow = 14* 14 * 14 * 8; // 16 * 16 * 16 * 8;
+export const numPFluid = 128000;  
 export const numP = numPJello + numPSnow + numPFluid; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
@@ -117,9 +119,9 @@ export const simParamData = new Float32Array([
     
     if (i >= 0 && i < numPJello) {
       // Jello Block (Bottom Block)
-      p1Data[8 * i + 0] = Math.random() * (16 * h) - 0 * h; // Particle Position X Component (1 float)
-      p1Data[8 * i + 1] = Math.random() * (16 * h) + 5 * h - 1; // Particle Position Y Component (1 float)
-      p1Data[8 * i + 2] = Math.random() * (16 * h) - 8 * h; // Particle Position Z Component (1 float)
+      p1Data[8 * i + 0] = Math.random() * (14 * h) - 0 * h; // Particle Position X Component (1 float)
+      p1Data[8 * i + 1] = Math.random() * (14 * h) + 5 * h - 1; // Particle Position Y Component (1 float)
+      p1Data[8 * i + 2] = Math.random() * (14 * h) - 8 * h; // Particle Position Z Component (1 float)
       p1Data[8 * i + 3] = 0;  // Particle Material Type (1 float)
       p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
       p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)
@@ -129,9 +131,9 @@ export const simParamData = new Float32Array([
       counterJello++;
     } else if (i < numPJello + numPSnow){
       // Snow Block (Top Block)
-      p1Data[8 * i + 0] = Math.random() * (16 * h) - 8 * h + 14 * h; // Particle Position X Component (1 float)
-      p1Data[8 * i + 1] = Math.random() * (16 * h) + ((nyG - 1) / 2 - 16 - 3) * h; // Particle Position Y Component (1 float)
-      p1Data[8 * i + 2] = Math.random() * (16 * h) - 8 * h + 4 * h; // Particle Position Z Component (1 float)
+      p1Data[8 * i + 0] = Math.random() * (14 * h) - 8 * h + 14 * h; // Particle Position X Component (1 float)
+      p1Data[8 * i + 1] = Math.random() * (14 * h) + ((nyG - 1) / 2 - 16 - 3) * h; // Particle Position Y Component (1 float)
+      p1Data[8 * i + 2] = Math.random() * (14 * h) - 8 * h + 4 * h; // Particle Position Z Component (1 float)
       p1Data[8 * i + 3] = 1;  // Particle Material Type (1 float)
       p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
       p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)

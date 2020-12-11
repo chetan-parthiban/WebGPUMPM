@@ -62,7 +62,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'WebGPU Samples',
+      title: 'WebGPU Material Point Method',
       filename: '../index.html',
       template: path.resolve(__dirname, '../src/index.html'),
       examples: exampleNames,
