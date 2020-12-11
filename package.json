@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@types/codemirror": "0.0.97",
-    "@webgpu/types": "^0.0.31",
+    "@webgpu/types": "0.0.31",
     "html-webpack-plugin": "^4.0.1",
     "http-server": "^0.12.3",
     "ts-loader": "^6.2.2",

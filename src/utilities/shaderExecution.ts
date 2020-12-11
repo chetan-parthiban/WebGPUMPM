@@ -37,3 +37,17 @@ export function runRenderPipeline(encoder, descriptor, pipeline, uniforms, verti
         passEncoder.endPass();
     }
 }
+
+export function runRenderPipelineWithBox(encoder, descriptor, pipeline, boxPipeline, uniforms, vertices, numInstances, useInstance = false, instanceVertices = 1, instanceBuffer = undefined) {
+    {
+        const passEncoder = encoder.beginRenderPass(descriptor);
+        passEncoder.setPipeline(pipeline);
+        passEncoder.setBindGroup(0, uniforms);
+        passEncoder.setVertexBuffer(0, vertices);
+        if (useInstance) {
+            passEncoder.setVertexBuffer(1, instanceBuffer);
+        }
+        passEncoder.draw(instanceVertices, numInstances, 0, 0);
+        passEncoder.endPass();
+    }
+}
