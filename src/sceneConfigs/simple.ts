@@ -1,13 +1,14 @@
 import { Vector3, Euler } from 'three';
 import {toVec3s, transformVec3, createParticleArray, mergeParticleArrays, ilog2ceil, getNumGPadded, models, materials, fillP2Data} from '../utilities/configParser'
 
+
 // Scene Definition
-let scene_models : Float32Array[] = [models.pikachu];
-let scene_scales : number[]       = [0.7];
+let scene_models : Float32Array[] = [models.amongUs];
+let scene_scales : number[]       = [0.5];
 let scene_rots   : Euler[]        = [new Euler(0.0,0.0,0.0)];
 let scene_translate : Vector3[]   = [new Vector3(0.0,0.0,0.0)];
-let scene_materials : number[]    = [materials.fluid];
-let scene_velocities : Vector3[]  = [new Vector3(0.0,0,0)];
+let scene_materials : number[]    = [materials.snow];
+let scene_velocities : Vector3[]  = [new Vector3(10.0,0,0)];
 
 // Benchmarking Parameters
 export const doBenchmark = false;
@@ -60,7 +61,7 @@ let particleArrays : Array<Float32Array> = Array(scene_models.length);
 let materialCounters = [0,0,0];
 for(let i = 0; i < scene_models.length; i++) {
     let modelVec3 = toVec3s(scene_models[i]);
-    modelVec3 = transformVec3(modelVec3, scene_rots[i], scene_translate[i], scene_scales[i]); 
+    modelVec3 = transformVec3(modelVec3, scene_rots[i], scene_translate[i], scene_scales[i], h); 
     particleArrays[i] = createParticleArray(modelVec3, scene_materials[i], scene_velocities[i], materialMasses[Math.floor(scene_materials[i])]);
     materialCounters[Math.floor(scene_materials[i])] += modelVec3.length;
 }

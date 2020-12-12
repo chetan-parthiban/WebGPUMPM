@@ -1,22 +1,23 @@
-import {amongUsPointArray} from '../models/amongUsPoint';
-import {dogPointArray} from '../models/dogPoint';
-import {heartPointArray} from '../models/heartPoint';
-import {jackOLanternPointArray} from '../models/jackOLanternPoint';
-import {pikachuPointArray} from '../models/pikachuPoint';
-import {simpleDodecahedronPointArray} from '../models/simpleDodecahedronPoint';
-import {simpleRubberToyPointArray} from '../models/simpleRubberToyPoint';
-import {wallEPointArray} from '../models/wallEPoint';
 import {Vector3, Matrix4, Euler} from 'three';
+import * as amongUsData from '../models/amongUsPoint.json';
+import * as dogData from '../models/dogPoint.json';
+import * as heartData from '../models/heartPoint.json';
+import * as jackOLanternData from '../models/jackOLanternPoint.json';
+import * as pikachuData from '../models/pikachuPoint.json';
+import * as simpledodecahedronData from '../models/simpleDodecahedronPoint.json';
+import * as rubberToyData from '../models/simpleRubberToyPoint.json';
+import * as wallEData from '../models/wallEPoint.json';
+
 
 export const models : Record<string, Float32Array> = {
-    // amongUs: amongUsPointArray,
-    // dog: dogPointArray,
-    // heart: heartPointArray,
-    // jackOLantern: jackOLanternPointArray,
-    pikachu: pikachuPointArray,
-    // dodecahedron: simpleDodecahedronPointArray,
-    // rubberToy: simpleRubberToyPointArray,
-    // wallE: wallEPointArray
+    amongUs: new Float32Array(amongUsData["data"]),
+    dog: new Float32Array(dogData["data"]),
+    heart: new Float32Array(heartData["data"]),
+    jackOLantern: new Float32Array(jackOLanternData["data"]),
+    pikachu: new Float32Array(pikachuData["data"]),
+    dodecahedron: new Float32Array(simpledodecahedronData["data"]),
+    rubberToy: new Float32Array(rubberToyData["data"]),
+    wallE: new Float32Array(wallEData["data"])
 }
 
 // p1 buffer
@@ -30,7 +31,7 @@ export function toVec3s(model : Float32Array) : Array<Vector3>{
     return vec3Arr;
 }
 
-export function transformVec3(vec3Arr: Array<Vector3>, rotation: Euler, translation: Vector3, scale: number) : Array<Vector3>{
+export function transformVec3(vec3Arr: Array<Vector3>, rotation: Euler, translation: Vector3, scale: number, gridWidth: number) : Array<Vector3>{
     let t1 = new Matrix4().scale(new Vector3(scale, scale, scale));
     let t2 = new Matrix4().makeRotationFromEuler(rotation);
     let t3 = new Matrix4().setPosition(translation);
@@ -40,7 +41,13 @@ export function transformVec3(vec3Arr: Array<Vector3>, rotation: Euler, translat
         point.applyMatrix4(transform);
     });
 
-    return vec3Arr;
+    let oldLength = vec3Arr.length;
+    let gridScale = 0.04/gridWidth;
+    let newLength = Math.ceil(oldLength * (scale * scale * scale) * (gridScale*gridScale*gridScale));
+    if (newLength > oldLength) {
+        newLength = oldLength;
+    }
+    return vec3Arr.slice(0,newLength);
 }
 
 export function createParticleArray(transformedPoints: Array<Vector3>, mat: number, vel: Vector3, mass: number) : Float32Array{
