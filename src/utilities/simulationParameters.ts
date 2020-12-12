@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 export const doBenchmark = false;
 export const queryLength = 18;
 // Simulation Parameters
-export const dt = 0.001; // Timestep
+export const dt = 0.0015; // Timestep
 export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
 
  // Grid Parameters
@@ -18,7 +18,7 @@ export const numGPadded = getNumGPadded(numG); // Total number of grid nodes but
 export const sweepIters = ilog2ceil(numGPadded) - 1;  // Number of iterations to iterate over in up sweep and down sweep in stream compaction
 
 // Particle Attributes
-export const E = 30000.0;  // Young's Modulus (Hardness)
+export const E = 15000.0;  // Young's Modulus (Hardness)
 export const E0 = 14000; // Initial Young's Modulus (for snow)
 export const nu = 0.3; // Poisson's Ratio (Incompressibility)
 export const nuSnow = 0.2; // Poisson's Ratio (for snow)
@@ -35,7 +35,7 @@ export const rhoFluid = 997; // Density of the points' material for fluid
 
 export const numPJello = 14* 14 * 14 * 8; // 16 * 16 * 16 * 8;
 export const numPSnow = 14* 14 * 14 * 8; // 16 * 16 * 16 * 8;
-export const numPFluid = 128000;  
+export const numPFluid = 12 * 40 * 40 * 8; // 128000;  
 export const numP = numPJello + numPSnow + numPFluid; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
@@ -143,7 +143,7 @@ export const simParamData = new Float32Array([
       counterSnow++;
     } else {
       // 128k Fluid
-      p1Data[8 * i + 0] = Math.random() * (10 * h) + 5 * h - 1; // Particle Position X Component (1 float)
+      p1Data[8 * i + 0] = Math.random() * (12 * h) + 5 * h - 1; // Particle Position X Component (1 float)
       p1Data[8 * i + 1] = Math.random() * (40 * h) + 5 * h - 1; // Particle Position Y Component (1 float)
       p1Data[8 * i + 2] = Math.random() * (40 * h) + 4 * h - 1; // Particle Position Z Component (1 float)
       p1Data[8 * i + 3] = 2;  // Particle Material Type (1 float)
