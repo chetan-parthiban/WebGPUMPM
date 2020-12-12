@@ -9,6 +9,7 @@ import * as rubberToyData from '../models/simpleRubberToyPoint.json';
 import * as wallEData from '../models/wallEPoint.json';
 
 
+// model and material options
 export const models : Record<string, Float32Array> = {
     amongUs: new Float32Array(amongUsData["data"]),
     dog: new Float32Array(dogData["data"]),
@@ -19,6 +20,12 @@ export const models : Record<string, Float32Array> = {
     rubberToy: new Float32Array(rubberToyData["data"]),
     wallE: new Float32Array(wallEData["data"])
 }
+
+export let materials : Record<string, number> = {
+    jello: 0,
+    snow: 1,
+    fluid: 2,
+};
 
 // p1 buffer
 export function toVec3s(model : Float32Array) : Array<Vector3>{
@@ -124,9 +131,3 @@ export function getNumGPadded(n) {
     }
     return nPadded;
 }
-
-export let materials : Record<string, number> = {
-    jello: 0,
-    snow: 1,
-    fluid: 2,
-};

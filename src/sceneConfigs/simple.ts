@@ -12,7 +12,7 @@ let scene_velocities : Vector3[]  = [new Vector3(10.0,0,0)];
 
 // Benchmarking Parameters
 export const doBenchmark = false;
-export const queryLength = 18;
+export const queryLength = 30;
 
 // Simulation Parameters
 export const dt = 0.001; // Timestep

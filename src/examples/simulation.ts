@@ -139,49 +139,39 @@ export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
 
     // Atomics Version
     for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 20.0); i++) {
-      runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1);
+      runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 0, query);
+      runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 2, query);
       /* ----------------------- Stream Compaction Starts -------------------------------------- */
       // Clear Stream Compaction Buffer Data
-      runComputePipeline(commandEncoder, clearSCPipeline, bindGroup, numGPadded, 1, 1);
+      runComputePipeline(commandEncoder, clearSCPipeline, bindGroup, numGPadded, 1, 1, doBenchmark, 4, query);
       // Get Criteria (1 if corresponding grid node has non-zero mass; 0 otherwise)
-      runComputePipeline(commandEncoder, getCriteriaPipeline, bindGroup, numG, 1, 1);
+      runComputePipeline(commandEncoder, getCriteriaPipeline, bindGroup, numG, 1, 1, doBenchmark, 6, query);
       // Up-Sweep/Reduce (Exclusive Scan)
       for (let i = 0; i <= sweepIters; i++) {
-        runComputePipeline(commandEncoder, upSweepPipeline, bindGroup, numGPadded, 1, 1);
+        runComputePipeline(commandEncoder, upSweepPipeline, bindGroup, numGPadded, 1, 1, doBenchmark, 8, query);
       }
       // Set Root To Zero (Exclusive Scan)
-      runComputePipeline(commandEncoder, setRootToZeroPipeline, bindGroup, numGPadded, 1, 1);
+      runComputePipeline(commandEncoder, setRootToZeroPipeline, bindGroup, numGPadded, 1, 1, doBenchmark, 10, query);
       // Down-Sweep (Exclusive Scan)
       for (let i = 0; i <= sweepIters; i++) {
-        runComputePipeline(commandEncoder, downSweepPipeline, bindGroup, numGPadded, 1, 1);
+        runComputePipeline(commandEncoder, downSweepPipeline, bindGroup, numGPadded, 1, 1, doBenchmark, 12, query);
       }
       // Scatter
-      runComputePipeline(commandEncoder, scatterPipeline, bindGroup, numGPadded, 1, 1);
+      runComputePipeline(commandEncoder, scatterPipeline, bindGroup, numGPadded, 1, 1, doBenchmark, 14, query);
       /* ----------------------- Stream Compaction Ends ---------------------------------------- */
-      runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, numG, 1, 1);
-      runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, numG, 1, 1);
-      runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG);
-      runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1);
-      runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1);
+      runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, numG, 1, 1, doBenchmark, 16, query);
+      runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 18, query);
+      runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, numG, 1, 1, doBenchmark, 20, query);
+      runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 22, query);
+      runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1, doBenchmark, 24, query);
+      runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1, doBenchmark, 26, query);
     }    
-    // // Atomics Version (Benchmarking Examples)
-    // for (let i = 0; i < Math.floor(1.0 / 24.0 / dt / 15.0); i++) {
-    // runComputePipeline(commandEncoder, clearGridDataPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 0, query);
-    // runComputePipeline(commandEncoder, p2g_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 2, query);
-    // runComputePipeline(commandEncoder, addGravityPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 4, query);
-    // runComputePipeline(commandEncoder, addMaterialForce_PPipeline, bindGroup, numP, 1, 1, doBenchmark, 6, query);
-    // runComputePipeline(commandEncoder, updateGridVelocityPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 8, query);
-    // runComputePipeline(commandEncoder, setBoundaryVelocitiesPipeline, bindGroup, nxG, nyG, nzG, doBenchmark, 10, query);
-    // runComputePipeline(commandEncoder, evolveFandJPipeline, bindGroup, numP, 1, 1, doBenchmark, 12, query);
-    // runComputePipeline(commandEncoder, g2pPipeline, bindGroup, numP, 1, 1, doBenchmark, 14, query);
-    // }
-    // if (doBenchmark) {
-    //   resolveQuery(commandEncoder, query, querySetBuffer, queryReadBuffer, queryLength);
-    // }
+
+    if (doBenchmark) {
+      resolveQuery(commandEncoder, query, querySetBuffer, queryReadBuffer, queryLength);
+    }
     runRenderPipeline(commandEncoder, renderPassDescriptor, renderPipeline, renderCubePipeline, uniformBindGroup2, 
-                      uniformBindGroupBox, p1Buffer, cube2Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer, doBenchmark, 16, query);
+                      uniformBindGroupBox, p1Buffer, cube2Buffer, numP, true, cubeParams.cubeVertexCount, cubeBuffer, doBenchmark, 28, query);
 
                       
     // Test
