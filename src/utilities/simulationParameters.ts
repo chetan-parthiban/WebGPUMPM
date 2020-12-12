@@ -18,7 +18,7 @@ export const numGPadded = getNumGPadded(numG); // Total number of grid nodes but
 export const sweepIters = ilog2ceil(numGPadded) - 1;  // Number of iterations to iterate over in up sweep and down sweep in stream compaction
 
 // Particle Attributes
-export const E = 15000.0;  // Young's Modulus (Hardness)
+export const E = 30000.0;  // Young's Modulus (Hardness)
 export const E0 = 14000; // Initial Young's Modulus (for snow)
 export const nu = 0.3; // Poisson's Ratio (Incompressibility)
 export const nuSnow = 0.2; // Poisson's Ratio (for snow)

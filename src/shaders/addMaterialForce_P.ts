@@ -357,7 +357,7 @@ export const addMaterialForce_PShader = {
 
     mat3 termJello, termSnow;
     float termFluid;
-    int materialType = int(particles1.data[index].pos.w);
+    int materialType = int(round(particles1.data[index].pos.w));
     if (materialType == 0) {  // JELLO
       mat3 FP = particles2.data[index].F;
       mat3 P = fixedCorotated(FP);
