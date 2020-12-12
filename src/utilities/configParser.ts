@@ -1,22 +1,22 @@
 import {amongUsPointArray} from '../models/amongUsPoint';
-// import {dogPointArray} from '../models/dogPoint';
-// import {heartPointArray} from '../models/heartPoint';
-// import {jackOLanternPointArray} from '../models/jackOLanternPoint';
+import {dogPointArray} from '../models/dogPoint';
+import {heartPointArray} from '../models/heartPoint';
+import {jackOLanternPointArray} from '../models/jackOLanternPoint';
 import {pikachuPointArray} from '../models/pikachuPoint';
 import {simpleDodecahedronPointArray} from '../models/simpleDodecahedronPoint';
-// import {simpleRubberToyPointArray} from '../models/simpleRubberToyPoint';
-// import {wallEPointArray} from '../models/wallEPoint';
+import {simpleRubberToyPointArray} from '../models/simpleRubberToyPoint';
+import {wallEPointArray} from '../models/wallEPoint';
 import {Vector3, Matrix4, Euler} from 'three';
 
 export const models : Record<string, Float32Array> = {
-    amongUs: amongUsPointArray,
-//     dog: dogPointArray,
-//     heart: heartPointArray,
-//     jackOLantern: jackOLanternPointArray,
+    // amongUs: amongUsPointArray,
+    // dog: dogPointArray,
+    // heart: heartPointArray,
+    // jackOLantern: jackOLanternPointArray,
     pikachu: pikachuPointArray,
-    dodecahedron: simpleDodecahedronPointArray,
-//     rubberToy: simpleRubberToyPointArray,
-//     wallE: wallEPointArray
+    // dodecahedron: simpleDodecahedronPointArray,
+    // rubberToy: simpleRubberToyPointArray,
+    // wallE: wallEPointArray
 }
 
 // p1 buffer
@@ -24,7 +24,7 @@ export function toVec3s(model : Float32Array) : Array<Vector3>{
     var vec3Arr = [];
     const pointCount = model.length/4;
     for(let i = 0; i < pointCount; i++) {
-        let idx = i * 3;
+        let idx = i * 4;
         vec3Arr.push(new Vector3(model[idx], model[idx+1], model[idx+2]));
     }
     return vec3Arr;

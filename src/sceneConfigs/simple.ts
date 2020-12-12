@@ -2,7 +2,7 @@ import { Vector3, Euler } from 'three';
 import {toVec3s, transformVec3, createParticleArray, mergeParticleArrays, ilog2ceil, getNumGPadded, models, materials, fillP2Data} from '../utilities/configParser'
 
 // Scene Definition
-let scene_models : Float32Array[] = [models.amongUs];
+let scene_models : Float32Array[] = [models.pikachu];
 let scene_scales : number[]       = [0.7];
 let scene_rots   : Euler[]        = [new Euler(0.0,0.0,0.0)];
 let scene_translate : Vector3[]   = [new Vector3(0.0,0.0,0.0)];
