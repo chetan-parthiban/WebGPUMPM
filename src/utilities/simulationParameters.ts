@@ -1,5 +1,7 @@
 import { Vector3 } from 'three';
 
+export const doBenchmark = false;
+export const queryLength = 18;
 // Simulation Parameters
 export const dt = 0.001; // Timestep
 export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
@@ -8,13 +10,15 @@ export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
 export const minCorner = new Vector3(-1.0, -1.0, -1.0); // Min corner of the grid (also works as the origin of the grid for offsetting purposes)
 export const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
 export const h = 0.04; // Cell width of the grid
-export const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid points in the x-direction
-export const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid points in the y-direction
-export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid points in the z-direction
-export const numG = nxG * nyG * nzG; // Total number of grid points
+export const nxG = Math.floor((maxCorner.x - minCorner.x) / h) + 1;  // Number of grid nodes in the x-direction
+export const nyG = Math.floor((maxCorner.y - minCorner.y) / h) + 1;  // Number of grid nodes in the y-direction
+export const nzG = Math.floor((maxCorner.z - minCorner.z) / h) + 1;  // Number of grid nodes in the z-direction
+export const numG = nxG * nyG * nzG; // Total number of grid nodes
+export const numGPadded = getNumGPadded(numG); // Total number of grid nodes but padded with 0s (For stream compaction purposes)
+export const sweepIters = ilog2ceil(numGPadded) - 1;  // Number of iterations to iterate over in up sweep and down sweep in stream compaction
 
 // Particle Attributes
-export const E = 10000.0;  // Young's Modulus (Hardness)
+export const E = 15000.0;  // Young's Modulus (Hardness)
 export const E0 = 14000; // Initial Young's Modulus (for snow)
 export const nu = 0.3; // Poisson's Ratio (Incompressibility)
 export const nuSnow = 0.2; // Poisson's Ratio (for snow)
@@ -29,9 +33,9 @@ export const rhoJello = 1000.0;  // Density of the points' material for jello
 export const rhoSnow = 400;  // Density of the points' material for snow
 export const rhoFluid = 997; // Density of the points' material for fluid
 
-export const numPJello = 16 * 16 * 16 * 8;
-export const numPSnow = 16 * 16 * 16 * 8;
-export const numPFluid = 128000;  // 128000
+export const numPJello = 14* 14 * 14 * 8; // 16 * 16 * 16 * 8;
+export const numPSnow = 14* 14 * 14 * 8; // 16 * 16 * 16 * 8;
+export const numPFluid = 128000;  
 export const numP = numPJello + numPSnow + numPFluid; // 4096 * 2; // Total number of points
 
 export const simParamData = new Float32Array([
@@ -95,6 +99,12 @@ export const simParamData = new Float32Array([
   // Padding to match the 4 floats alignment (1 float)
   export const gData = new Float32Array(numG * 16);
 
+  // Criteria Buffer (Only Has Value 0 Or 1) (1 float)
+  // Scan Buffer (Result Of Exclusive Scanning The Criteria Buffer) (1 float)
+  // Stream Compaction Result Buffer (Final Result Of Stream Compaction After Scattering) (1 float)
+  // Iteration Depth Buffer (Storing The Current Iteration Depth In Up-Sweep And Down-Sweep) (1 float)
+  export const gSCData = new Float32Array(numGPadded * 4);
+
 
   let matIdentity : number[] = [1, 0, 0, 0,/*Col 1*/ 0, 1, 0, 0,/*Col 2*/ 0, 0, 1, 0/*Col 3*/];
   let volumeP = h * h * h / 8.0;
@@ -109,9 +119,9 @@ export const simParamData = new Float32Array([
     
     if (i >= 0 && i < numPJello) {
       // Jello Block (Bottom Block)
-      p1Data[8 * i + 0] = Math.random() * (16 * h) - 0 * h; // Particle Position X Component (1 float)
-      p1Data[8 * i + 1] = Math.random() * (16 * h) + 5 * h - 1; // Particle Position Y Component (1 float)
-      p1Data[8 * i + 2] = Math.random() * (16 * h) - 8 * h; // Particle Position Z Component (1 float)
+      p1Data[8 * i + 0] = Math.random() * (14 * h) - 0 * h; // Particle Position X Component (1 float)
+      p1Data[8 * i + 1] = Math.random() * (14 * h) + 5 * h - 1; // Particle Position Y Component (1 float)
+      p1Data[8 * i + 2] = Math.random() * (14 * h) - 8 * h; // Particle Position Z Component (1 float)
       p1Data[8 * i + 3] = 0;  // Particle Material Type (1 float)
       p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
       p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)
@@ -121,9 +131,9 @@ export const simParamData = new Float32Array([
       counterJello++;
     } else if (i < numPJello + numPSnow){
       // Snow Block (Top Block)
-      p1Data[8 * i + 0] = Math.random() * (16 * h) - 8 * h + 14 * h; // Particle Position X Component (1 float)
-      p1Data[8 * i + 1] = Math.random() * (16 * h) + ((nyG - 1) / 2 - 16 - 3) * h; // Particle Position Y Component (1 float)
-      p1Data[8 * i + 2] = Math.random() * (16 * h) - 8 * h + 4 * h; // Particle Position Z Component (1 float)
+      p1Data[8 * i + 0] = Math.random() * (14 * h) - 8 * h + 14 * h; // Particle Position X Component (1 float)
+      p1Data[8 * i + 1] = Math.random() * (14 * h) + ((nyG - 1) / 2 - 16 - 3) * h; // Particle Position Y Component (1 float)
+      p1Data[8 * i + 2] = Math.random() * (14 * h) - 8 * h + 4 * h; // Particle Position Z Component (1 float)
       p1Data[8 * i + 3] = 1;  // Particle Material Type (1 float)
       p1Data[8 * i + 4] = 0;  // Particle Velocity X Component (1 float)
       p1Data[8 * i + 5] = 0;  // Particle Velocity Y Component (1 float)
@@ -160,6 +170,32 @@ export const simParamData = new Float32Array([
     p2Data[52 * i + 51] = 0;  // Padding to match the 4 floats alignment (1 float)
   }
 
+  function ilog2(x) {
+    let lg = 0;
+    while (x = x >> 1) {
+        ++lg;
+    }
+    return lg;
+  }
+
+  function ilog2ceil(x) {
+    return x == 1 ? 0 : ilog2(x - 1) + 1;
+  }
+
+  // Testing
+  // console.log(ilog2ceil(16777216 + 1));
+  // console.log(ilog2ceil(numG));
+
+  function getNumGPadded(n) {
+    let paddedSize = 1 << ilog2ceil(n);
+    let nPadded = n;
+    if (paddedSize > n) {
+      nPadded = paddedSize;
+    }
+    return nPadded;
+  }
+  
+
   for (let i = 0; i < numG; i++) {
     // Fill in gData
     gData[16 * i + 0] = 0;  // New Velocity Stored On The Grid Node (X Component) (1 float)
@@ -179,6 +215,14 @@ export const simParamData = new Float32Array([
     gData[16 * i + 14] = 0;  // PADDING (1 float)
     gData[16 * i + 15] = 0;  // PADDING (1 float)
   }
+
+  for (let i = 0; i < numGPadded; i++) {
+    // Fill in gSCData
+    gSCData[4 * i + 0] = 0; // Criteria (Only Has Value 0 Or 1) (1 float)
+    gSCData[4 * i + 1] = 0; // Scan Result (Result Of Exclusive Scanning The Criteria Buffer) (1 float)
+    gSCData[4 * i + 2] = 0; // Stream Compaction Result (Final Result Of Stream Compaction After Scattering) (1 float)
+    gSCData[4 * i + 3] = 0; // Iteration Depth (Storing The Current Iteration Depth In Up-Sweep And Down-Sweep) (1 float)
+}
 
   console.log("Number Of Jello Particles: " + counterJello.toString());
   console.log("Number Of Snow Particles: " + counterSnow.toString());

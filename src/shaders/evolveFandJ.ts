@@ -1,5 +1,5 @@
 export const evolveFandJShader = {
-evolveFandJ: (numPArg: number, numGArg: number) => `#version 450
+evolveFandJ: (numPArg: number, numGArg: number, numGPaddedArg: number) => `#version 450
 layout(std140, set = 0, binding = 0) uniform SimParams {
   float dt; // Timestep
   float gravityX;  // Gravity (x-component)
@@ -57,6 +57,12 @@ struct GridNodeStruct {
   float PADDING_2;  // (IGNORE)
   float PADDING_3;  // (IGNORE)
 };
+struct StreamCompStruct {
+    float criteria; // Criteria (Only Has Value 0 Or 1)
+    float scan; // Scan Result (Result Of Exclusive Scanning The Criteria Buffer)
+    float compact; // Stream Compaction Result (Final Result Of Stream Compaction After Scattering)
+    float d; // Iteration Depth (Storing The Current Iteration Depth In Up-Sweep And Down-Sweep)
+  };
 layout(std430, set = 0, binding = 1) buffer PARTICLES1 {
   ParticleStruct1 data[${numPArg}];
 } particles1;
@@ -66,6 +72,10 @@ layout(std430, set = 0, binding = 2) buffer PARTICLES2 {
 layout(std430, set = 0, binding = 3) buffer GRIDNODES {
   GridNodeStruct data[${numGArg}];
 } gridNodes;
+layout(std430, set = 0, binding = 4) buffer STREAMCOMPACTION {
+  StreamCompStruct data[${numGPaddedArg}];
+} SC;
+
 // Compute weights (when each thread handles a particle)
 void computeWeights1D_P(float x, out vec3 w, out vec3 dw, out int baseNode) {
   // x is the particle's index-space position and can represent particle's index-space position in x, y, or z direction,

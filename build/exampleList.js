@@ -1,4 +1,4 @@
 module.exports = [
     './examples/helloTriangle',
-    './examples/computeBoids',
+    './examples/simulation',
 ];

@@ -1,3 +1,6 @@
+import * as cubeParams from "../cube";
+import * as cubeParams2 from "../cube2"
+
 export function createComputePipeline(code, device, glslang) {
     return device.createComputePipeline({
         computeStage: {
@@ -30,7 +33,7 @@ export function createRenderingPipeline(shaders, device, glslang) {
       entryPoint: "main",
     },
 
-    primitiveTopology: "point-list",
+    primitiveTopology: "triangle-list",
 
     depthStencilState: {
       depthWriteEnabled: true,
@@ -59,6 +62,22 @@ export function createRenderingPipeline(shaders, device, glslang) {
             },
           ],
         },
+        {
+          arrayStride: cubeParams.cubeVertexSize,
+          stepMode: "vertex",
+          attributes: [
+            {
+              shaderLocation: 2,
+              offset: cubeParams.cubePositionOffset,
+              format: "float4",
+            },
+            {
+              shaderLocation: 3,
+              offset: cubeParams.cubeNormalOffset,
+              format: "float4",
+            }
+          ]
+        }
       ],
     },
 
@@ -70,7 +89,6 @@ export function createRenderingPipeline(shaders, device, glslang) {
   });
 }
 
-import { cubeVertexSize, cubeColorOffset, cubePositionOffset, cubeNormOffset } from '../utilities/cube';
 
 export function createRenderCubePipeline (shaders, device, glslang) {
   return device.createRenderPipeline({
@@ -100,24 +118,18 @@ export function createRenderCubePipeline (shaders, device, glslang) {
     vertexState: {
       vertexBuffers: [
         {
-          arrayStride: cubeVertexSize,
+          arrayStride: cubeParams2.cubeVertexSize,
           attributes: [
             {
               // position
               shaderLocation: 0,
-              offset: cubePositionOffset,
-              format: "float4",
-            },
-            {
-              // color
-              shaderLocation: 1,
-              offset: cubeColorOffset,
+              offset: cubeParams2.cubePositionOffset,
               format: "float4",
             },
             {
               // normal
-              shaderLocation: 2,
-              offset: cubeNormOffset,
+              shaderLocation: 1,
+              offset: cubeParams2.cubeNormalOffset,
               format: "float4",
             },
           ],
@@ -126,13 +138,24 @@ export function createRenderCubePipeline (shaders, device, glslang) {
     },
 
     rasterizationState: {
-      cullMode: "none",
+      cullMode: "front",
     },
 
     colorStates: [
       {
         format: "bgra8unorm",
+        alphaBlend: {
+          srcFactor: "src-alpha",
+          dstFactor: "one-minus-src-alpha",
+          operation: "add",
+        },
+        colorBlend: {
+            srcFactor: "src-alpha",
+            dstFactor: "one-minus-src-alpha",
+            operation: "add",
+        },
       },
     ],
   });
 }
+
