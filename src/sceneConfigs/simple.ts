@@ -5,7 +5,7 @@ import {toVec3s, transformVec3, createParticleArray, mergeParticleArrays, ilog2c
 // Scene Definition
 let scene_models : Float32Array[] = [models.amongUs];
 let scene_scales : number[]       = [0.5];
-let scene_rots   : Euler[]        = [new Euler(0.0,0.0,0.0)];
+let scene_rots   : Euler[]        = [new Euler(0.0,1.57,0.0)];
 let scene_translate : Vector3[]   = [new Vector3(0.0,0.0,0.0)];
 let scene_materials : number[]    = [materials.snow];
 let scene_velocities : Vector3[]  = [new Vector3(10.0,0,0)];
