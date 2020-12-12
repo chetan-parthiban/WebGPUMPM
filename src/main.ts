@@ -70,7 +70,7 @@ async function loadExample(hashName: string) {
     var phi = 0;
     var theta = 0;
 
-    var eye = vec4.fromValues(0, 0, 2, 1);
+    var eye = vec4.fromValues(0, 0, 3, 1);
     var right = vec4.fromValues(1,0,0,1);
     var up = vec4.fromValues(0,1,0,1);
     var forward = vec4.fromValues(0,0,1,1);

@@ -26,10 +26,10 @@ export const renderingShaders = {
     mat4 proj = uniforms.matrices[2];
     float scale;
   
-    if (abs(a_particlePos.w - 2) <= 0.1) {
+    if (round(a_particlePos.w) == 2) {
       // FLUID
       scale = 0.01;
-    } else if (abs(a_particlePos.w - 1) <= 0.1){
+    } else if (round(a_particlePos.w)== 1){
       // SNOW
       scale = 0.02;
     } else {
@@ -80,21 +80,21 @@ export const renderingShaders = {
     vec3 c1 = vec3(0.000, 0.130, 0.333);
     vec3 d1 = vec3(0.000, 0.718, 0.667);
     
-    if (abs(fs_pos.w - 0) <= 0.1) {
+    if (round(fs_pos.w) == 0) {
       // JELLO
       // fragColor = vec4(1,0.47,0.06,1);
       fragColor = clamp(vec4(a0+b0*cos(2*pi*(c0*t01+d0)), 1), 0, 1);
-    } else if (abs(fs_pos.w - 1) <= 0.1) {
+    } else if (round(fs_pos.w) == 1) {
       // SNOW
       // fragColor = clamp(vec4(a1+b1*cos(2*pi*(c1*t01+d1)), 1), 0, 1);
       fragColor = vec4(1,1,1,1);
-    } else if (abs(fs_pos.w - 2) <= 0.1) {
+    } else if (round(fs_pos.w) == 2) {
       // FLUID
       fragColor = clamp(vec4(a2+b2*cos(2*pi*(c2*t+d2)), 1), 0, 1);
       // fragColor = vec4(0,0,1,1);
     } else {
       // SHOULD NOT GET TO THIS ELSE STATEMENT IF EVERYTHING WORKS RIGHT
-      fragColor = vec4(1,1,1,1);
+      fragColor = vec4(1,0,1,1);
     }
     
 
