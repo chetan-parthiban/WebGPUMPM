@@ -1,6 +1,6 @@
 // File exported by Jacky's OBJ Loader
 // Number Of Points: 20
-export const simpleDodecahedronPointArray = new Float32Array([
+export const simpleDodecahedronPointArray : Float32Array = new Float32Array([
 	-0.573493, 0.186339, 0.789344, 1,
 	0.354438, 0.487842, -0.789344, 1,
 	0, -0.975684, -0.186339, 1,

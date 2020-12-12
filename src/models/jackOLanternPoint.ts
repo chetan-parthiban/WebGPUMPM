@@ -1,6 +1,6 @@
 // File exported by Jacky's OBJ Loader
 // Number Of Points: 53498
-export const jackOLanternPointArray = new Float32Array([
+export const jackOLanternPointArray : Float32Array = new Float32Array([
 	-0.636274, -0.241455, -0.29745, 1,
 	0.055422, 0.445127, -0.147553, 1,
 	0.121834, -0.539207, -0.641806, 1,

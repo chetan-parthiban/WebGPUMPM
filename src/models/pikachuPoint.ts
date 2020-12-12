@@ -1,6 +1,6 @@
 // File exported by Jacky's OBJ Loader
 // Number Of Points: 36142
-export const pikachuPointArray = new Float32Array([
+export const pikachuPointArray : Float32Array = new Float32Array([
 	-0.257808, -0.235533, 0.265298, 1,
 	0.276361, -0.192858, 0.2832, 1,
 	0.00972666, 0.146621, 0.543719, 1,

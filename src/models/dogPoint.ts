@@ -1,6 +1,6 @@
 // File exported by Jacky's OBJ Loader
 // Number Of Points: 62064
-export const dogPointArray = new Float32Array([
+export const dogPointArray : Float32Array = new Float32Array([
 	-0.161045, 0.54421, 0.406735, 1,
 	-0.0457853, 0.451233, 0.274173, 1,
 	0.113183, 0.22749, -0.0573772, 1,

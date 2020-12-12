@@ -1,6 +1,6 @@
 // File exported by Jacky's OBJ Loader
 // Number Of Points: 10170
-export const simpleRubberToyPointArray = new Float32Array([
+export const simpleRubberToyPointArray : Float32Array = new Float32Array([
 	-0.294027, -0.394854, -0.558839, 1,
 	0.328234, -0.194469, -0.148299, 1,
 	0.0869618, -0.0234393, 0.468033, 1,
