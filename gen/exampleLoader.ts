@@ -5,6 +5,3 @@
 
   export const simulation = async () => (await import('../src/examples/simulation'));
   
-
-  export const simulation2 = async () => (await import('../src/examples/simulation2'));
-  
