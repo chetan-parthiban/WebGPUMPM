@@ -351,7 +351,7 @@ export const addMaterialForceShader = {
           abs(posP_index_space.z - baseNodeK) < 1.5) {
             mat3 termJello, termSnow;
             float termFluid;
-            int materialType = int(particles1.data[p].pos.w);
+            int materialType = int(round(particles1.data[p].pos.w));
             if (materialType == 0) {  // JELLO
               mat3 FP = particles2.data[p].F;
               mat3 P = fixedCorotated(FP);

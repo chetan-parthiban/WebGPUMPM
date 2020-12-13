@@ -4,6 +4,7 @@
         "module": "esNext",
         "target": "es6",
         "moduleResolution": "node",
+        "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
     },
     "include": [

@@ -269,7 +269,7 @@ void main() {
   computeWeights1D_P(posP_index_space.z, wK, dwK, baseNodeK);
   mat3 grad_vP = mat3(0.0);
   float vP = 0.0;
-  int material = int(particles1.data[index].pos.w);
+  int material = int(round(particles1.data[index].pos.w));
   
   for (int k = 0; k < 3; k++) {
     for (int j = 0; j < 3; j++) {
