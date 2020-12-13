@@ -31,10 +31,10 @@ export const renderingShaders = {
       scale = 0.01;
     } else if (round(a_particlePos.w)== 1){
       // SNOW
-      scale = 0.02;
+      scale = 0.02; // 0.017 for pikachu;
     } else {
       // JELLO
-      scale = 0.03;
+      scale = 0.03; // 0.017 for pikachu;
     }
 
     gl_Position = proj * view * vec4(a_particlePos.xyz+(a_cubePos.xyz*scale), 1.0);

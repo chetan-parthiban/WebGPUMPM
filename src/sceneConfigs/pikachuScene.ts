@@ -5,10 +5,10 @@ import {toVec3s, transformVec3, createParticleArray, mergeParticleArrays, ilog2c
 // Scene Definition
 let scene_models : Float32Array[] = [models.pikachu, models.pikachu];
 let scene_scales : number[]       = [0.5, 0.5];
-let scene_rots   : Euler[]        = [new Euler(0.0,1.57,0.0), new Euler(0,0,0)];
-let scene_translate : Vector3[]   = [new Vector3(0.0,-0.5,0.0), new Vector3(0,0.5,0)];
+let scene_rots   : Euler[]        = [new Euler(0.0,1.1,0.0), new Euler(0,0,0)];
+let scene_translate : Vector3[]   = [new Vector3(-0.4,-0.1,-0.2), new Vector3(0,0.5,-0.2)];
 let scene_materials : number[]    = [materials.jello, materials.snow];
-let scene_velocities : Vector3[]  = [new Vector3(0.0,0,0), new Vector3(0.0,0,0)];
+let scene_velocities : Vector3[]  = [new Vector3(0.7,0.8,0.7), new Vector3(0.0,0,0.2)];
 
 // Benchmarking Parameters
 export const doBenchmark = true;
@@ -24,7 +24,7 @@ export const maxCorner = new Vector3(1.0, 1.0, 1.0);  // Max corner of the grid
 export const h = 0.04; // Cell width of the grid
 
 // Particle Attributes
-export const E = 15000.0;  // Young's Modulus (Hardness)
+export const E = 20000.0;  // Young's Modulus (Hardness)
 export const E0 = 14000; // Initial Young's Modulus (for snow)
 export const nu = 0.3; // Poisson's Ratio (Incompressibility)
 export const nuSnow = 0.2; // Poisson's Ratio (for snow)
