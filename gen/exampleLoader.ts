@@ -5,3 +5,6 @@
 
   export const simulation = async () => (await import('../src/examples/simulation'));
   
+
+  export const pikachu = async () => (await import('../src/examples/pikachu'));
+  
