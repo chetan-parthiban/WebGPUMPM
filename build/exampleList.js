@@ -3,4 +3,5 @@ module.exports = [
     './examples/simulation',
     './examples/amongUs',
     './examples/pikachu',
+    './examples/twoFluids',
 ];
