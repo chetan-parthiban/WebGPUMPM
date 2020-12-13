@@ -23,8 +23,10 @@ export const models : Record<string, Float32Array> = {
 
 export let materials : Record<string, number> = {
     jello: 0,
+    jelloG: 0.1,
     snow: 1,
     fluid: 2,
+    fluidR: 2.1
 };
 
 // p1 buffer
