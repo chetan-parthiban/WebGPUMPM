@@ -3,12 +3,12 @@ import {toVec3s, transformVec3, createParticleArray, mergeParticleArrays, ilog2c
 
 
 // Scene Definition
-let scene_models : Float32Array[] = [models.pikachu, models.pikachu];
-let scene_scales : number[]       = [0.5, 0.5];
-let scene_rots   : Euler[]        = [new Euler(0.0,1.57,0.0), new Euler(0,0,0)];
-let scene_translate : Vector3[]   = [new Vector3(0.0,-0.5,0.0), new Vector3(0,0.5,0)];
-let scene_materials : number[]    = [materials.jello, materials.snow];
-let scene_velocities : Vector3[]  = [new Vector3(0.0,0,0), new Vector3(0.0,0,0)];
+let scene_models : Float32Array[] = [models.amongUs, models.amongUs];
+let scene_scales : number[]       = [0.7, 0.7];
+let scene_rots   : Euler[]        = [new Euler(0.0,1.57,0.0), new Euler(0,-1.57,0)];
+let scene_translate : Vector3[]   = [new Vector3(-0.5, 0.0, 0.0), new Vector3(0.5, 0.0, 0)];
+let scene_materials : number[]    = [materials.fluid, materials.fluidR];
+let scene_velocities : Vector3[]  = [new Vector3(2,0,0), new Vector3(-2,0,0)];
 
 // Benchmarking Parameters
 export const doBenchmark = true;
