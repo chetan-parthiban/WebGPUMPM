@@ -1,16 +1,19 @@
 {
   "name": "webgpu-samples",
+  "homepage": "https://chetan-parthiban.github.io/WebGPUMPM",
   "version": "0.0.2",
   "description": "Samples using the Web GPU API",
   "private": false,
   "repository": {
     "type": "git",
-    "url": "https://github.com/austinEng/webgpu-samples.git"
+    "url": "https://github.com/chetan-parthiban/WebGPUMPM.git"
   },
   "scripts": {
     "build": "rm -rf dist gen && webpack --config build/webpack.config.js",
     "start": "webpack --config build/webpack.config.js --watch --progress",
-    "serve": "http-server"
+    "serve": "http-server",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "dependencies": {
     "codemirror": "^5.57.0",
@@ -24,6 +27,7 @@
   "devDependencies": {
     "@types/codemirror": "0.0.97",
     "@webgpu/types": "0.0.31",
+    "gh-pages": "^3.1.0",
     "html-webpack-plugin": "^4.0.1",
     "http-server": "^0.12.3",
     "ts-loader": "^6.2.2",
