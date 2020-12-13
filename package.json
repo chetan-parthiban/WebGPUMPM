@@ -1,8 +1,8 @@
 {
-  "name": "webgpu-samples",
-  "homepage": "https://chetan-parthiban.github.io/WebGPUMPM",
-  "version": "0.0.2",
-  "description": "Samples using the Web GPU API",
+  "name": "webgpu-mpm",
+  "homepage": ".",
+  "version": "0.0.1",
+  "description": "MPM using the Web GPU API",
   "private": false,
   "repository": {
     "type": "git",
