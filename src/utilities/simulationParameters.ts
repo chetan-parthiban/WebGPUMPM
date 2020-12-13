@@ -3,7 +3,7 @@ import { Vector3 } from 'three';
 export const doBenchmark = false;
 export const queryLength = 18;
 // Simulation Parameters
-export const dt = 0.0015; // Timestep
+export const dt = 0.001; // Timestep
 export const gravity  = new Vector3(0.0, -9.8, 0.0);  // Gravity
 
  // Grid Parameters

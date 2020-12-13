@@ -7,6 +7,8 @@ import * as pikachuData from '../models/pikachuPoint.json';
 import * as simpledodecahedronData from '../models/simpleDodecahedronPoint.json';
 import * as rubberToyData from '../models/simpleRubberToyPoint.json';
 import * as wallEData from '../models/wallEPoint.json';
+import * as turkeyData from '../models/turkeyPoint.json';
+import * as gravyData from '../models/gravyPoint.json';
 
 
 // model and material options
@@ -18,7 +20,9 @@ export const models : Record<string, Float32Array> = {
     pikachu: new Float32Array(pikachuData["data"]),
     dodecahedron: new Float32Array(simpledodecahedronData["data"]),
     rubberToy: new Float32Array(rubberToyData["data"]),
-    wallE: new Float32Array(wallEData["data"])
+    wallE: new Float32Array(wallEData["data"]),
+    turkey: new Float32Array(turkeyData["data"]),
+    gravy: new Float32Array(gravyData["data"])
 }
 
 export let materials : Record<string, number> = {

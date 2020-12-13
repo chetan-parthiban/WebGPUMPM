@@ -11,3 +11,9 @@
 
   export const pikachu = async () => (await import('../src/examples/pikachu'));
   
+
+  export const turkey = async () => (await import('../src/examples/turkey'));
+  
+
+  export const twoHearts = async () => (await import('../src/examples/twoHearts'));
+  
