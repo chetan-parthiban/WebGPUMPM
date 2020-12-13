@@ -26,7 +26,7 @@ import { testShader } from '../shaders/test';
 import { createRenderingPipeline, createRenderCubePipeline, createComputePipeline } from '../utilities/shaderCreation';
 import { createBuffer, createEmptyUniformBuffer } from '../utilities/bufferCreation';
 import { createBindGroup } from '../utilities/bindGroupCreation';
-import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt, gSCData, numGPadded, sweepIters, doBenchmark, queryLength } from '../utilities/simulationParameters';
+import { simParamData, p1Data, p2Data, gData, numP, numG, nxG, nyG, nzG, dt, gSCData, numGPadded, sweepIters, doBenchmark, queryLength } from '../sceneConfigs/amongUs';
 import { getCameraTransformFunc, getProjectionMatrix } from '../utilities/cameraUtils'
 import * as boilerplate from '../utilities/webgpuBoilerplate';
 import { runComputePipeline, runRenderPipeline, writeBuffer } from '../utilities/shaderExecution';
