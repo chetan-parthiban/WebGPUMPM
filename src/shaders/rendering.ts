@@ -34,7 +34,7 @@ export const renderingShaders = {
       scale = 0.02; // 0.017 for pikachu;
     } else {
       // JELLO
-      scale = 0.03; // 0.017 for pikachu;
+      scale = 0.02; // 0.017 for pikachu;
     }
 
     gl_Position = proj * view * vec4(a_particlePos.xyz+(a_cubePos.xyz*scale), 1.0);
@@ -60,6 +60,10 @@ export const renderingShaders = {
   // [[2.208, 0.770, 1.318] [0.000, 0.738, 0.518] [0.000, 0.130, 0.333] [0.000 0.718 0.667]] pink-white
 
   // [[0.000, 0.628, -0.152] [0.738, 0.500, 0.358] [-0.302, 0.333, 0.500] [0.338, 0.667, 0.500]] green - yellow/green
+  // [[2.188, 0.068, 0.788] [0.500, -1.042, 0.298] [0.500, -0.372, 0.500] [0.000, 0.000, 0.500]] red/pink - purple/pink
+  // [[0.808, 0.268, -0.332] [-0.482, 0.358, -0.152] [-0.462, 0.408, -0.442] [-0.062, 0.608, 0.000]] brown - orange
+  // [[0.420, 0.353, 0.327] [0.799, 0.501, 0.305] [0.154, 0.262, 0.228] [-1.176, 3.779, -2.134]] fur
+  // [[0.788, 0.668, 0.000] [-0.172, 0.208, 0.000] [-0.482, 0.338, 0.000] [0.000, 0.558, 0.000]] gravy
 
 
   void main() {
@@ -67,6 +71,7 @@ export const renderingShaders = {
     // max speed is around 5
     float t = clamp(length(fs_vel.xyz) / 2.0, 0, 1); // fluid
     float t01 = clamp(length(fs_vel.xyz), 0, 1); // jello/snow
+    float t02 = clamp(length(fs_vel.xyz) / 3.0, 0, 1); // fast jello/snow
     float pi = 3.1415926535;
 
     // fluid: blue - cyan
@@ -87,18 +92,61 @@ export const renderingShaders = {
     vec3 c01 = vec3(-0.302, 0.333, 0.500);
     vec3 d01 = vec3(0.338, 0.667, 0.500);
 
+    // red/pink - purple/pink
+    vec3 a02 = vec3(2.188, 0.068, 0.788);
+    vec3 b02 = vec3(0.500, -1.042, 0.298);
+    vec3 c02 = vec3(0.500, -0.372, 0.500);
+    vec3 d02 = vec3(0.000, 0.000, 0.500);
+
+    // brown - orange
+    vec3 a03 = vec3(0.808, 0.268, -0.332);
+    vec3 b03 = vec3(-0.482, 0.358, -0.152);
+    vec3 c03 = vec3(-0.462, 0.408, -0.442);
+    vec3 d03 = vec3(-0.062, 0.608, 0.000);
+
+    // fur
+    vec3 a04 = vec3(0.420, 0.353, 0.327);
+    vec3 b04 = vec3(0.799, 0.501, 0.305);
+    vec3 c04 = vec3(0.154, 0.262, 0.228);
+    vec3 d04 = vec3(-1.176, 3.779, -2.134);
+
     // pink - white
     vec3 a1 = vec3(2.208, 0.770, 1.318);
     vec3 b1 = vec3(0.000, 0.738, 0.518);
     vec3 c1 = vec3(0.000, 0.130, 0.333);
     vec3 d1 = vec3(0.000, 0.718, 0.667);
+
+    // gravy
+    vec3 a22 = vec3(0.788, 0.668, 0.000);
+    vec3 b22 = vec3(-0.172, 0.208, 0.000);
+    vec3 c22 = vec3(-0.482, 0.338, 0.000);
+    vec3 d22 = vec3(0.000, 0.558, 0.000);
+
+    
+
+    
     
     if (round(fs_pos.w) == 0) {
       // JELLO
+      // green - green/yellow
       if (round(fs_pos.w * 10) == 1) {
-        fragColor = clamp(vec4(a01+b01*cos(2*pi*(c01*t01+d01)), 1), 0, 1);
+        fragColor = clamp(vec4(a01+b01*cos(2*pi*(c01*t02+d01)), 1), 0, 1);
       }
 
+      // red/pink - purple/pink
+      else if (round(fs_pos.w * 10) == 2) {
+        fragColor = clamp(vec4(a02+b02*cos(2*pi*(c02*t02+d02)), 1), 0, 1);
+      }
+
+      // brown - orange
+      else if (round(fs_pos.w * 10) == 3) {
+        fragColor = clamp(vec4(a03+b03*cos(2*pi*(c03*t02+d03)), 1), 0, 1);
+      }
+
+      // fur
+      else if (round(fs_pos.w * 10) == 4) {
+        fragColor = clamp(vec4(a04+b04*cos(2*pi*(c04*t02+d04)), 1), 0, 1);
+      }
       
       else {
         // default Jello: red - yellow
@@ -121,8 +169,14 @@ export const renderingShaders = {
     
     } else if (round(fs_pos.w) == 2) {
       // FLUID
+      // red - yellow
       if (round(fs_pos.w * 10) == 21) {
         fragColor = clamp(vec4(a0+b0*cos(2*pi*(c0*t+d0)), 1), 0, 1);
+      }
+
+      // gravy
+      else if (round(fs_pos.w * 10) == 22) {
+        fragColor = clamp(vec4(a22+b22*cos(2*pi*(c22*t+d22)), 1), 0, 1);
       }
 
       else {

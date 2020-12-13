@@ -11,7 +11,7 @@ let scene_materials : number[]    = [materials.jello, materials.snow];
 let scene_velocities : Vector3[]  = [new Vector3(0.7,0.8,0.7), new Vector3(0.0,0,0.2)];
 
 // Benchmarking Parameters
-export const doBenchmark = true;
+export const doBenchmark = false;
 export const queryLength = 30;
 
 // Simulation Parameters
