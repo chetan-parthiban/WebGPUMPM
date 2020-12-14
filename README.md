@@ -15,9 +15,9 @@ Fluid & Jello Coupling        |   Snow & Jello Coupling
 <img src="gifs/fluidjello.gif" width="300">| <img src="gifs/fluidsnow.gif" width="300"> |
 
 ### Final Results
-Two Pikachus (Snow & Jello Coupling)        |
-:-------------------------:|:-------------------------:
-<img src="gifs/pikachu_1.gif" width="300">|
+Two Pikachus (Snow & Jello Coupling)
+
+<img src="gifs/pikachu_1.gif" width="300">
 
 ## More WebGPU Samples to get started with WebGPU
 
