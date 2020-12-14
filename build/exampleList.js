@@ -5,4 +5,5 @@ module.exports = [
     './examples/pikachu',
     './examples/turkey',
     './examples/twoHearts',
+    './examples/twoFluids',
 ];
