@@ -17,3 +17,6 @@
 
   export const twoHearts = async () => (await import('../src/examples/twoHearts'));
   
+
+  export const twoFluids = async () => (await import('../src/examples/twoFluids'));
+  
