@@ -23,7 +23,7 @@ Two Pikachus (Snow & Jello Coupling)
 
 This repo was built from the  [WebGPU Samples Repo](//austineng.github.io/webgpu-samples/), a set of WGSL
 and SPIR-V compatible samples demonstrating the use of the [WebGPU API](//webgpu.dev). Please see the current implementation status at
-[webgpu.io](//webgpu.io). **Thank you so much Austin and Kai for your help with this project!**
+[webgpu.io](//webgpu.io). **Thank you so much Austin, Kai, Dr.Jiang, and the WebGPU team for helping with this project!**
 
 These samples run in Chrome Canary behind the flag `--enable-unsafe-webgpu`. If
 something isn't working, please file an issue
