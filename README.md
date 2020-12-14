@@ -51,7 +51,7 @@ npm run-script serve
 ```
 
 ## Special Thanks
-**We would like to credit Austin, Kai, Dr.Jiang, and the WebGPU team for their help with this project. Thank you so much!**
+**This project would not have been possible without the guidances from Austin Eng, Kai Ninomiya, Dr. Chenfanfu Jiang, and the WebGPU team.**
 
 ## Credits
 1. https://gpuweb.github.io/gpuweb/
