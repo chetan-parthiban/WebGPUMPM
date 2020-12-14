@@ -3,14 +3,21 @@
 ## Jiecong "Jacky" Lu, Chetan Parthiban, Haorong (Henry) Yang
 MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accurate materials. In this project, we show off the compute capabilities of WebGPU to implement a MPM simulator allowing for the real-time simulation of 200k particles from a selection of three materials (Fluids, Jellos, and Snow). Here are 3 examples of our simulation running in real-time (jello + fluid, jello + snow, just jello):
 
-### Run this demo live using Chrome Canary behind the flag `--enable-unsafe-webgpu`. You can get Chrome Canary [here](https://www.google.com/intl/en_in/chrome/canary/).
+### Run this demo live using Chrome Canary behind the flag `--enable-unsafe-webgpu`. 
+#### &nbsp;&nbsp;&nbsp;&nbsp; Step 1. Get Chrome Canary [here](https://www.google.com/intl/en_in/chrome/canary/).
+#### &nbsp;&nbsp;&nbsp;&nbsp; Step 2. Enable WebGPU at `chrome://flags/#enable-unsafe-webgpu`.
 
 <img src="gifs/all_2.gif" width="600">
 
 ### MidPoint Results
-Fluid + Jello          |   Snow + Jello
+Fluid & Jello Coupling        |   Snow & Jello Coupling
 :-------------------------:|:-------------------------:
 <img src="gifs/fluidjello.gif" width="300">| <img src="gifs/fluidsnow.gif" width="300"> |
+
+### Final Results
+Two Pikachus (Snow & Jello Coupling)        |
+:-------------------------:|:-------------------------:
+<img src="gifs/pikachu_1.gif" width="300">|
 
 ## More WebGPU Samples to get started with WebGPU
 
@@ -52,6 +59,7 @@ npm run-script serve
 6. [Stomakhin, A., Schroeder, C., Chai, L., Teran, J., Selle, A. 2013. A Material Point Method for Snow Simulation. ACM Trans. Graph. 32, 4, Article 102 (July 2013), 12 pages.](http://doi.acm.org/10.1145/2461912.2461948)
 7. https://en.wikipedia.org/wiki/Material_point_method
 8. [Chenfanfu Jiang, Craig Schroeder, Joseph Teran, Alexey Stomakhin, and Andrew Selle. 2016. The material point method for simulating continuum materials. In ACM SIGGRAPH 2016 Courses (SIGGRAPH '16). Association for Computing Machinery, New York, NY, USA, Article 24, 1–52.](https://doi.org/10.1145/2897826.2927348)
+9. https://developers.google.com/web/updates/2019/08/get-started-with-gpu-compute-on-the-web
 
 
 ## Model Credits
