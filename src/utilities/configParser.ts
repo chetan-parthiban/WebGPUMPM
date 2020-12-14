@@ -2,11 +2,7 @@ import {Vector3, Matrix4, Euler} from 'three';
 import * as amongUsData from '../models/amongUsPoint.json';
 import * as dogData from '../models/dogPoint.json';
 import * as heartData from '../models/heartPoint.json';
-import * as jackOLanternData from '../models/jackOLanternPoint.json';
 import * as pikachuData from '../models/pikachuPoint.json';
-import * as simpledodecahedronData from '../models/simpleDodecahedronPoint.json';
-import * as rubberToyData from '../models/simpleRubberToyPoint.json';
-import * as wallEData from '../models/wallEPoint.json';
 import * as turkeyData from '../models/turkeyPoint.json';
 import * as gravyData from '../models/gravyPoint.json';
 
@@ -16,11 +12,7 @@ export const models : Record<string, Float32Array> = {
     amongUs: new Float32Array(amongUsData["data"]),
     dog: new Float32Array(dogData["data"]),
     heart: new Float32Array(heartData["data"]),
-    jackOLantern: new Float32Array(jackOLanternData["data"]),
     pikachu: new Float32Array(pikachuData["data"]),
-    dodecahedron: new Float32Array(simpledodecahedronData["data"]),
-    rubberToy: new Float32Array(rubberToyData["data"]),
-    wallE: new Float32Array(wallEData["data"]),
     turkey: new Float32Array(turkeyData["data"]),
     gravy: new Float32Array(gravyData["data"])
 }
