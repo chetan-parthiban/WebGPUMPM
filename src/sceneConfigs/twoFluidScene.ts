@@ -11,7 +11,7 @@ let scene_materials : number[]    = [materials.fluid, materials.fluidR];
 let scene_velocities : Vector3[]  = [new Vector3(2,0,0), new Vector3(-2,0,0)];
 
 // Benchmarking Parameters
-export const doBenchmark = true;
+export const doBenchmark = false;
 export const queryLength = 30;
 
 // Simulation Parameters

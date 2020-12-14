@@ -38,7 +38,7 @@ export const title = 'Material Point Method';
 export const description = 'A hybrid Eulerian/Lagrangian method for the simulation \
                             of realistic materials, running in real time on the GPU. \
                             You can interact with the simulation by moving the camera \
-                            using the WASD keys on the keyboard.';
+                            using the WASD keys on the keyboard.\n Made by Jiecong \"Jacky\" Lu, Chetan Parthiban, Haorong (Henry) Yang.';
 
 export async function init(canvas: HTMLCanvasElement, useWGSL: boolean) {
   // setup webgpu device, context, and glsl compiler
