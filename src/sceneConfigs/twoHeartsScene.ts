@@ -7,7 +7,7 @@ let scene_models : Float32Array[] = [models.heart, models.heart];
 let scene_scales : number[]       = [0.25, 0.25];
 let scene_rots   : Euler[]        = [new Euler(0, 0, 0), new Euler(0, 0, 0)];
 let scene_translate : Vector3[]   = [new Vector3(-0.4, 0.2, 0), new Vector3(0.4, 0.2, 0)];
-let scene_materials : number[]    = [materials.jello, materials.jelloG];
+let scene_materials : number[]    = [materials.jelloP, materials.jelloG];
 let scene_velocities : Vector3[]  = [new Vector3(2, 2, 2), new Vector3(-2, 2, 2)];
 
 // Benchmarking Parameters
