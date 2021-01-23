@@ -5,7 +5,7 @@ MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accu
 
 ## Demo Links:
 
-[http://chetanp.io/WebGPUMPM](https://chetanp.io/WebGPUMPM)
+[http://chetanp.io/WebGPUMPM](http://chetanp.io/WebGPUMPM)
 
 [https://jackylu0124.github.io/WebGPUMPM](https://jackylu0124.github.io/WebGPUMPM)
 
