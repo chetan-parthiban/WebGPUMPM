@@ -1,23 +1,39 @@
 # WebGPU Material Point Method
 
 ## Jiecong "Jacky" Lu, Chetan Parthiban, Haorong (Henry) Yang
-MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accurate materials. In this project, we show off the compute capabilities of WebGPU to implement a MPM simulator allowing for the real-time simulation of 200k particles from a selection of three materials (Fluids, Jellos, and Snow). Here are 3 examples of our simulation running in real-time (jello + fluid, jello + snow, just jello):
+MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accurate materials. In this project, we show off the compute capabilities of WebGPU to implement a MPM simulator allowing for the real-time simulation of 200k particles from a selection of three materials (Fluids, Jellos, and Snow). The GIFs in the final results are sped up 8 times and the ones in the midpoint results are realtime.
+
+## Demo Links:
+
+chetanp.io/WebGPUMPM
+
+jackylu0124.github.io/WebGPUMPM
 
 ### Run this demo live using Chrome Canary behind the flag `--enable-unsafe-webgpu`. 
 #### &nbsp;&nbsp;&nbsp;&nbsp; Step 1. Get Chrome Canary [here](https://www.google.com/intl/en_in/chrome/canary/).
 #### &nbsp;&nbsp;&nbsp;&nbsp; Step 2. Enable WebGPU at `chrome://flags/#enable-unsafe-webgpu`.
 
-<img src="gifs/all_2.gif" width="600">
+<img src="final_gifs/turkeyx8_gif.gif" width="600">
+
+
+Three Materials Coupling       |   Fluid Interaction
+:-------------------------:|:-------------------------:
+<img src="final_gifs/couplingx8.gif" width="300">| <img src="final_gifs/twofluids_gifx16.gif" width="300"> |
+
+Three Jello Collision        |   Two Jello Hearts
+:-------------------------:|:-------------------------:
+<img src="final_gifs/dogTurkeyHeart_gif.gif" width="300">| <img src="final_gifs/heart_gif.gif" width="300"> |
+
+Snow Smash        |   Snow & Jello Pikachus
+:-------------------------:|:-------------------------:
+<img src="final_gifs/amongus_gif.gif" width="300">| <img src="gifs/pikachu_1.gif" width="300"> |
+
 
 ### MidPoint Results
 Fluid & Jello Coupling        |   Snow & Jello Coupling
 :-------------------------:|:-------------------------:
 <img src="gifs/fluidjello.gif" width="300">| <img src="gifs/fluidsnow.gif" width="300"> |
 
-### Final Results
-Two Pikachus (Snow & Jello Coupling)
-
-<img src="gifs/pikachu_1.gif" width="300">
 
 ## More WebGPU Samples to get started with WebGPU
 
