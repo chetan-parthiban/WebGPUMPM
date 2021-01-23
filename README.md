@@ -5,9 +5,9 @@ MPM is a hybrid Eulerian/Lagrangian method for the simulation of physically accu
 
 ## Demo Links:
 
-chetanp.io/WebGPUMPM
+[chetanp.io/WebGPUMPM](chetanp.io/WebGPUMPM)
 
-jackylu0124.github.io/WebGPUMPM
+[jackylu0124.github.io/WebGPUMPM](jackylu0124.github.io/WebGPUMPM)
 
 ### Run this demo live using Chrome Canary behind the flag `--enable-unsafe-webgpu`. 
 #### &nbsp;&nbsp;&nbsp;&nbsp; Step 1. Get Chrome Canary [here](https://www.google.com/intl/en_in/chrome/canary/).
